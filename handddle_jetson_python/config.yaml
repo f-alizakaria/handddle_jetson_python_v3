@@ -1,0 +1,47 @@
+serial:
+  baudrate: 9600
+  ports_prefix: /dev/ttyACM
+
+systems:
+  - profile: master
+    ip: 127.0.0.1
+    port: 5050
+    system_codes:
+      T-01: C1062208
+    start: false
+
+  - profile: slave
+    ip: 127.0.0.2
+    port: 5050
+    system_codes:
+      T-02: C1062201
+    start: true
+
+
+broadcast:
+  ip: 127.255.255.255
+  uid: CFFFFFFF
+
+watchdog_interval: 4 # Seconds
+
+api_server:
+  protocol: https
+  host: beta.handddle.com
+  licence_key: HANDDDLE
+
+influxdb:
+  protocol: https
+  host: data.beta.handddle.com
+  org: handddle
+  token: 5GEStuLlJu6-GqL3nDDxknaVTHOiB24xa2GlS5-7yswL2EtPOmhlBmldLLRohNBIoeM9FQ8-rHCKrxj3iZONgQ==
+  bucket: farm_data
+
+scanner:
+  serial_base: 0x18502
+  baudrate: 9600
+
+debug: false
+
+demo: false
+
+display_data: true
