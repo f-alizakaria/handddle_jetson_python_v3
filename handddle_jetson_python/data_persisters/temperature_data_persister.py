@@ -3,4 +3,4 @@ from data_persisters.data_persister import DataPersister
 class TemperatureDataPersister(DataPersister):
 
 	def getValue(self):
-		return float(self.value) / 100
+		return float(self.value) / 10

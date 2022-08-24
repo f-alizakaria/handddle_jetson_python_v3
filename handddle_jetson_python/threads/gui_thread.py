@@ -106,6 +106,5 @@ class GUIThread(threading.Thread):
 
 			return {'success': True}
 
-		if self.profile == 'master':
-			# app.run(host='127.0.0.1', port=8080)
-			serve(app, host='127.0.0.1', port=8080)
+		app.run(host='127.0.0.1', port=8080)
+		# serve(app, host='127.0.0.1', port=8080)

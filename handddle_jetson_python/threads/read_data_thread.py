@@ -53,7 +53,6 @@ class ReadDataThread(threading.Thread):
 		while True:  # Infinite loop
 
 			try:
-
 				time.sleep(2)
 				has_data_to_send = False
 				data_to_send = {}

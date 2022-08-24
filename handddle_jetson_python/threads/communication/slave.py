@@ -41,11 +41,10 @@ class Slave(threading.Thread):
 		file_logger.info('[Slave] Initializing slave system.')
 
 		file_logger.info('[Slave] Creating server...')
-		self.server = Server(self.slave['ip'], self.slave['port'])
+		self.server = Server(self.slave['ip'], self.slave['port'], self.sendCommandToTransferQueue).start()
 
 		# A slave accepts only one connection (from the master)
 		file_logger.info('[Slave] Waiting for the master client to connect...')
-		self.server.acceptClient(reception_callback=self.sendCommandToTransferQueue)
 
 		# Init the client
 		# Here, the master client should already be connected to the slave server
@@ -63,6 +62,8 @@ class Slave(threading.Thread):
 		self.master_initialized = True
 
 		while True:
+			if self.client.connection_with_server_lost:
+				file_logger.error(f'[Slave] Connection with Master system lost. (Details: connection_with_master_lost = {self.client.connection_with_server_lost}).\nWaiting for the master client to connect...')
 			time.sleep(2)
 
 	def sendDataToMaster(self, data):

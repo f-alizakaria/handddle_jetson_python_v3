@@ -16,17 +16,20 @@ file_handler.setFormatter(FORMATTER)
 file_logger.addHandler(file_handler)
 file_logger.propagate = False
 
-class Server:
+class Server(threading.Thread):
 
-	def __init__(self, ip, port):
+	def __init__(self, ip, port, reception_callback):
+		threading.Thread.__init__(self)
 		self.ip = ip
 		self.port = port
+		self.reception_callback = reception_callback
 
 		self.client_threads = []
 
 		# Create socket to the desired IP
 		file_logger.info('[Server] Creating server...')
 		self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+		self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 		file_logger.info(f"Port : {self.port} and IP addr : {self.ip}")
 		self.socket.bind((self.ip, self.port))
 		self.socket.listen()
@@ -39,6 +42,10 @@ class Server:
 		self.client_threads[-1].start()
 
 		file_logger.info('[Server] New client connected (Total: {})'.format(len(self.client_threads)))
+
+	def run(self):
+		while True:
+			self.acceptClient(self.reception_callback)
 
 
 class HandleClientThread(threading.Thread):
@@ -58,6 +65,8 @@ class HandleClientThread(threading.Thread):
 					file_logger.info('[Server] New message from [{}]: {}'.format(self.addr, message))
 
 					# Execute callback function
+					if message == 'check_message':
+						file_logger.info(f'check_message with {self.addr} received!')
 					if self.reception_callback is not None:
 						self.reception_callback(message)
 

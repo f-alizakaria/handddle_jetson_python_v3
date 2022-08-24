@@ -1,7 +1,7 @@
 import threading
 import time
 import requests
-
+import os
 from messages.tlv_message import TLVMessage
 
 import logging
@@ -72,6 +72,10 @@ class SendCommandsThread(threading.Thread):
 						file_logger.info("[APP] Command : ", command)
 						try:
 							if command['system_code'] in self.master['system_codes']:
+								# Check if door is opened
+								if command['action'] == 'door_closed':
+									self.door_opened(command)
+
 								message, hexa = TLVMessage.createTLVCommandFromJson(self.master['system_codes'][command['system_code']],
 																					command['action'],
 																					int(command['data']))
@@ -113,9 +117,32 @@ class SendCommandsThread(threading.Thread):
 
 				file_logger.info('[ME] Command sent to the STM32.')
 				# Send the message to all connected STM32
-				for port_name in self.se:
-					for i in range(len(message)):
-						self.se[port_name].write(message[i:i + 1])
-						time.sleep(0.001)
+				try:
+					for port_name in self.se:
+						for i in range(len(message)):
+							self.se[port_name].write(message[i:i + 1])
+							time.sleep(0.001)
+				except OSError:
+					file_logger.critical('A STM32 was disconnected.\nThe program need to restart!')
+					os._exit(0)
+				except Exception as e:
+					file_logger.error(e)
 
 			file_logger.info('>>> Sent command: {:040x}'.format(int.from_bytes(message, byteorder='big')))
+
+
+	def door_opened(self, command):
+
+		uids = []
+		for system_code in self.master['system_codes']:
+			if 'R' not in system_code:
+				uids.append(self.master['system_codes'][system_code])
+
+		info = {
+			'action': 'door_opened',
+			'data': 1
+		}
+
+		for uid in uids:
+			message, hexa = TLVMessage.createTLVInformationFromJson(uid, info['action'], int(info['data']))
+			# self.messages_to_send.append(message)
