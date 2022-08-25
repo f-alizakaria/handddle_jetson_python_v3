@@ -72,10 +72,6 @@ class SendCommandsThread(threading.Thread):
 						file_logger.info("[APP] Command : ", command)
 						try:
 							if command['system_code'] in self.master['system_codes']:
-								# Check if door is opened
-								if command['action'] == 'door_closed':
-									self.door_opened(command)
-
 								message, hexa = TLVMessage.createTLVCommandFromJson(self.master['system_codes'][command['system_code']],
 																					command['action'],
 																					int(command['data']))
@@ -129,20 +125,3 @@ class SendCommandsThread(threading.Thread):
 					file_logger.error(e)
 
 			file_logger.info('>>> Sent command: {:040x}'.format(int.from_bytes(message, byteorder='big')))
-
-
-	def door_opened(self, command):
-
-		uids = []
-		for system_code in self.master['system_codes']:
-			if 'R' not in system_code:
-				uids.append(self.master['system_codes'][system_code])
-
-		info = {
-			'action': 'door_opened',
-			'data': 1
-		}
-
-		for uid in uids:
-			message, hexa = TLVMessage.createTLVInformationFromJson(uid, info['action'], int(info['data']))
-			# self.messages_to_send.append(message)
