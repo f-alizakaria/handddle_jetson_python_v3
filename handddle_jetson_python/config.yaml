@@ -4,18 +4,20 @@ serial:
 
 systems:
   - profile: master
-    ip: 127.0.0.1
+    ip: 169.254.1.10
     port: 5050
     system_codes:
       T-01: C1062208
-    start: false
+    start: true
 
   - profile: slave
-    ip: 127.0.0.2
+    ip: 169.254.1.11
     port: 5050
     system_codes:
-      T-02: C1062201
-    start: true
+      T-01: C1062201
+      R-02: C2062201
+      R-11: C2062202
+    start: false
 
 
 broadcast:

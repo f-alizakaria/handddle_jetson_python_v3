@@ -67,7 +67,7 @@ class HandleClientThread(threading.Thread):
 					# Execute callback function
 					if message == 'check_message':
 						file_logger.info(f'check_message with {self.addr} received!')
-					if self.reception_callback is not None:
+					elif self.reception_callback is not None:
 						self.reception_callback(message)
 
 				else:
