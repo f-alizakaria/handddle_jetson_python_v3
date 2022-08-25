@@ -29,6 +29,7 @@ class Slave(threading.Thread):
 		self.transfer_queue = transfer_queue
 
 		self.master_initialized = False
+		self.connection_with_master_lost = False
 
 		self.server = None
 		self.client = None
@@ -51,7 +52,7 @@ class Slave(threading.Thread):
 		file_logger.info('[Slave] Creating client...')
 		while self.client is None:
 			try:
-				self.client = Client(self.master['ip'], self.master['port'])
+				self.client = Client(self.master['ip'], self.master['port'], self.connection_with_master_lost)
 
 			except ConnectionRefusedError as e:
 				file_logger.error('[Slave] Cannot reach the master system. Retrying...')
