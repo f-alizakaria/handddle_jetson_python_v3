@@ -159,6 +159,8 @@ class ReadDataThread(threading.Thread):
 							except Exception as e:
 								file_logger.error('Error with a message received on port {}: {} (Raw message: {})'.format(port_name, e, chunk.hex()))
 
+				file_logger.info(data_to_send)
+
 				if self.profile == 'master' and has_data_to_send:
 					# Send all data to influxdb
 					self.influxdb_service.writeDataBySystemCode(data_to_send=data_to_send)

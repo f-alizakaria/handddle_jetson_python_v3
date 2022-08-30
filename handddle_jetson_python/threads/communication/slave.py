@@ -34,7 +34,6 @@ class Slave(threading.Thread):
 		self.server = None
 		self.client = None
 
-
 	def run(self):
 		# Slave = 1 server + 1 client
 
@@ -42,7 +41,8 @@ class Slave(threading.Thread):
 		file_logger.info('[Slave] Initializing slave system.')
 
 		file_logger.info('[Slave] Creating server...')
-		self.server = Server(self.slave['ip'], self.slave['port'], self.sendCommandToTransferQueue).start()
+		self.server = Server(self.slave['ip'], self.slave['port'], self.sendCommandToTransferQueue)
+		self.server.start()
 
 		# A slave accepts only one connection (from the master)
 		file_logger.info('[Slave] Waiting for the master client to connect...')
@@ -54,7 +54,7 @@ class Slave(threading.Thread):
 			try:
 				self.client = Client(self.master['ip'], self.master['port'], self.connection_with_master_lost)
 
-			except ConnectionRefusedError as e:
+			except ConnectionRefusedError:
 				file_logger.error('[Slave] Cannot reach the master system. Retrying...')
 				time.sleep(5)
 
@@ -63,13 +63,26 @@ class Slave(threading.Thread):
 		self.master_initialized = True
 
 		while True:
-			if self.client.connection_with_server_lost:
-				file_logger.error(f'[Slave] Connection with Master system lost. (Details: connection_with_master_lost = {self.client.connection_with_server_lost}).\nWaiting for the master client to connect...')
-			time.sleep(2)
 
+			if self.client.connection_with_server_established:
+				if self.server.client_threads:
+					self.client.msd = False
+				else:
+					self.client.msd = True
+
+
+				# remove dead thread from client_threads list
+				for thread in self.server.client_threads:
+					if not thread.is_alive():
+						self.server.client_threads.remove(thread)
+			else:
+				file_logger.error(f'[Slave] Connection with Master system lost. (Details: connection_with_server_established = {self.client.connection_with_server_established}).\nRetrying to established the connection...')
+
+			time.sleep(5)
 	def sendDataToMaster(self, data):
-		self.client.sendData(data)
-		file_logger.info(f'[Slave] Data sent to the master system : {data}')
+		if self.client.connection_with_server_established:
+			self.client.sendData(data)
+			file_logger.info(f'[Slave] Data sent to the master system : {data}')
 
 	def sendCommandToTransferQueue(self, message):
 

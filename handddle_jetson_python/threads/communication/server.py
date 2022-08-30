@@ -45,6 +45,7 @@ class Server(threading.Thread):
 
 	def run(self):
 		while True:
+			# Accept all client connections
 			self.acceptClient(self.reception_callback)
 
 
@@ -53,6 +54,7 @@ class HandleClientThread(threading.Thread):
 	def __init__(self, conn, addr, reception_callback):
 		threading.Thread.__init__(self)
 		self.conn = conn
+		self.conn.settimeout(15)
 		self.addr = addr
 		self.reception_callback = reception_callback
 
@@ -65,17 +67,14 @@ class HandleClientThread(threading.Thread):
 					file_logger.info('[Server] New message from [{}]: {}'.format(self.addr, message))
 
 					# Execute callback function
-					if message == 'check_message':
-						file_logger.info(f'check_message with {self.addr} received!')
-					elif self.reception_callback is not None:
+					if self.reception_callback is not None:
 						self.reception_callback(message)
-
-				else:
-					break
 
 			except ConnectionResetError as e:
 				file_logger.critical('[Server] Connection lost. (Details: {})'.format(e))
-				break
+
+			except socket.timeout:
+				file_logger.critical("[Server] Timeout raised and caught. Please verify the Ethernet cables.")
 
 			except Exception as e:
 				file_logger.critical('[Server] Error while dealing with a reveiced message. (Details: {})'.format(e))

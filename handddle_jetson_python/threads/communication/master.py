@@ -61,7 +61,6 @@ class Master(threading.Thread):
 		file_logger.info('[Master] Creating server...')
 		self.server = Server(self.master['ip'], self.master['port'], self.sendSlaveDataToCloud).start()
 
-		# Accept all slaves connections
 		while True:
 			for system_code in self.clients:
 				self.clients[system_code].check_server_is_alive()

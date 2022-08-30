@@ -8,7 +8,7 @@ systems:
     port: 5050
     system_codes:
       T-02: C1062208
-    start: true
+    start: false
 
   - profile: slave
     ip: 169.254.1.11
@@ -17,7 +17,7 @@ systems:
       T-01: C1062201
       R-01: C2062201
       R-11: C2062202
-    start: false
+    start: true
 
 
 broadcast:

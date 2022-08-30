@@ -18,45 +18,52 @@ file_logger.propagate = False
 
 class Client:
 
-	def __init__(self, ip, port, connection_with_server_lost=False):
+	def __init__(self, ip, port, connection_with_server_established=False):
 		self.ip = ip
 		self.port = port
 
-		self.connection_with_server_lost = connection_with_server_lost
+		self.msd = False
 
 		self.socket = None
+
+		self.connection_with_server_established = connection_with_server_established
+
+		file_logger.info('[Client] Creating client...')
 
 		self.client_connection()
 
 	def sendData(self, data):
+
+		if self.msd:
+			file_logger.error('[Client] Connection with the server lost.')
+			self.connection_with_server_established = False
+			self.socket.close()
+			self.client_connection()
+
 
 		try:
 			self.socket.send(str(data).encode('utf8'))
 
 		except BrokenPipeError:
 			file_logger.error('[Client] Connection with the server lost.')
-			self.connection_with_server_lost = True
-
-			while self.connection_with_server_lost:
-				try:
-					self.client_connection()
-					self.connection_with_server_lost = False
-				except ConnectionRefusedError:
-					file_logger.error('[Client] Cannot connect to the server. Retrying...')
-					time.sleep(5)
+			self.connection_with_server_established = False
+			self.socket.close()
+			self.client_connection()
 
 		except Exception as e:
 			file_logger.critical('[Client] Error while sending a message. (Details: {})'.format(e))
 
-	# time.sleep(1)
-
 	def client_connection(self):
-		file_logger.info('[Client] Creating client...')
-		# Create socket to connect to the desired IP
-		self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-		self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)  # to allow to recreate a socket without the address already use error
-		self.socket.connect((self.ip, self.port))
-		file_logger.info('[Client] Done. Client connected to {} on port {}.'.format(self.ip, self.port))
-
-	def check_server_is_alive(self):
-		self.sendData('check_message')
+		while not self.connection_with_server_established:
+			try:
+				# Create socket to connect to the desired IP
+				self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+				self.socket.settimeout(5)
+				self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR,
+									   1)  # to allow to recreate a socket without the address already use error
+				self.socket.connect((self.ip, self.port))
+				self.connection_with_server_established = True
+				file_logger.info('[Client] Done. Client connected to {} on port {}.'.format(self.ip, self.port))
+			except Exception as e:
+				file_logger.error(f'[Client] Cannot connect to the server. Retrying...\n(Details: {e}')
+				time.sleep(5)
