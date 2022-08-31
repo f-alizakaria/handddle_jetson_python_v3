@@ -22,8 +22,6 @@ class Client:
 		self.ip = ip
 		self.port = port
 
-		self.msd = False
-
 		self.socket = None
 
 		self.connection_with_server_established = connection_with_server_established
@@ -33,13 +31,6 @@ class Client:
 		self.client_connection()
 
 	def sendData(self, data):
-
-		if self.msd:
-			file_logger.error('[Client] Connection with the server lost.')
-			self.connection_with_server_established = False
-			self.socket.close()
-			self.client_connection()
-
 
 		try:
 			self.socket.send(str(data).encode('utf8'))
@@ -67,3 +58,6 @@ class Client:
 			except Exception as e:
 				file_logger.error(f'[Client] Cannot connect to the server. Retrying...\n(Details: {e}')
 				time.sleep(5)
+
+	def send_check_message(self):
+		self.sendData('check_message')

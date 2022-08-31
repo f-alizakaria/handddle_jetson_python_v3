@@ -64,11 +64,18 @@ class HandleClientThread(threading.Thread):
 				message = self.conn.recv(1024).decode('utf8')
 
 				if message:
+					if message == 'check_message':
+						file_logger.info('[Server] Check message received.')
+						continue
+
 					file_logger.info('[Server] New message from [{}]: {}'.format(self.addr, message))
 
 					# Execute callback function
 					if self.reception_callback is not None:
 						self.reception_callback(message)
+				else:
+					file_logger.critical(f"[Server] Connection lost.")
+					break
 
 			except ConnectionResetError as e:
 				file_logger.critical('[Server] Connection lost. (Details: {})'.format(e))

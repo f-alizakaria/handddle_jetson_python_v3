@@ -97,7 +97,7 @@ class MainMessage(Message):
 		17: {'name': 'pm1_sen5x', 'class': 'default_data_persister'},
 		18: {'name': 'pm2_5_sen5x', 'class': 'default_data_persister'},
 		19: {'name': 'pm4_sen5x', 'class': 'default_data_persister'},
-		20: {'name': 'pm10_sen5x', 'class': 'door_closed_data_persister'},
+		20: {'name': 'pm10_sen5x', 'class': 'default_data_persister'},
 		22: {'name': 'typology', 'class': 'default_data_persister'}, # Unused
 	}
 

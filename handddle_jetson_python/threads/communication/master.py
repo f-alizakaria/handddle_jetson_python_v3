@@ -21,6 +21,7 @@ file_handler.setFormatter(FORMATTER)
 file_logger.addHandler(file_handler)
 file_logger.propagate = False
 
+
 class Master(threading.Thread):
 
 	def __init__(self, master, slaves, influxdb_config, debug):
@@ -33,6 +34,7 @@ class Master(threading.Thread):
 		# Indexed by system code
 		self.server = None
 		self.clients = {}
+		self.clients_list = []
 
 
 	def run(self):
@@ -56,15 +58,22 @@ class Master(threading.Thread):
 					file_logger.critical(f"[Master] Cannot reach the slave system.\nRetrying... at {slave['ip']} : {slave['port']}")
 					time.sleep(5)
 
+		self.clients_list = list(dict.fromkeys([client for client in self.clients.values()])) # Save all clients and remove duplicates
 
 		# Init the server
 		file_logger.info('[Master] Creating server...')
-		self.server = Server(self.master['ip'], self.master['port'], self.sendSlaveDataToCloud).start()
+		self.server = Server(self.master['ip'], self.master['port'], self.sendSlaveDataToCloud)
+		self.server.start()
 
 		while True:
-			for system_code in self.clients:
-				self.clients[system_code].check_server_is_alive()
-				time.sleep(.01)
+			# Remove dead thread from client_threads list
+			for thread in self.server.client_threads:
+				if not thread.is_alive():
+					self.server.client_threads.remove(thread)
+
+			for client in self.clients_list:
+				client.send_check_message()
+
 			time.sleep(5)
 
 	def sendCommandToSlave(self, command):

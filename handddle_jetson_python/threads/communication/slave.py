@@ -65,11 +65,8 @@ class Slave(threading.Thread):
 		while True:
 
 			if self.client.connection_with_server_established:
-				if self.server.client_threads:
-					self.client.msd = False
-				else:
-					self.client.msd = True
 
+				self.client.send_check_message()
 
 				# remove dead thread from client_threads list
 				for thread in self.server.client_threads:
