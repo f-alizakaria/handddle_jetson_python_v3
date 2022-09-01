@@ -64,22 +64,21 @@ class Slave(threading.Thread):
 
 		while True:
 
-			if self.client.connection_with_server_established:
-
-				self.client.send_check_message()
-
-				# remove dead thread from client_threads list
-				for thread in self.server.client_threads:
-					if not thread.is_alive():
-						self.server.client_threads.remove(thread)
-			else:
-				file_logger.error(f'[Slave] Connection with Master system lost. (Details: connection_with_server_established = {self.client.connection_with_server_established}).\nRetrying to established the connection...')
+			# remove dead thread from client_threads list
+			for thread in self.server.client_threads:
+				if not thread.is_alive():
+					self.server.client_threads.remove(thread)
+				else:
+					file_logger.error(f'[Slave] Connection with Master system lost. (Details: connection_with_server_established = {self.client.connection_with_server_established}).\nRetrying to established the connection...')
 
 			time.sleep(5)
+
 	def sendDataToMaster(self, data):
+		self.client.sendData(data)
 		if self.client.connection_with_server_established:
-			self.client.sendData(data)
 			file_logger.info(f'[Slave] Data sent to the master system : {data}')
+		else:
+			file_logger.info(f'[Slave] Data not sent to the master system : {data}')
 
 	def sendCommandToTransferQueue(self, message):
 

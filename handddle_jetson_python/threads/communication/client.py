@@ -32,17 +32,24 @@ class Client:
 
 	def sendData(self, data):
 
-		try:
-			self.socket.send(str(data).encode('utf8'))
-
-		except BrokenPipeError:
+		if not self.connection_with_server_established:
 			file_logger.error('[Client] Connection with the server lost.')
 			self.connection_with_server_established = False
 			self.socket.close()
 			self.client_connection()
 
-		except Exception as e:
-			file_logger.critical('[Client] Error while sending a message. (Details: {})'.format(e))
+		else:
+			try:
+				self.socket.send(str(data).encode('utf8'))
+
+			except BrokenPipeError:
+				file_logger.error('[Client] Connection with the server lost.')
+				self.connection_with_server_established = False
+				self.socket.close()
+				self.client_connection()
+
+			except Exception as e:
+				file_logger.critical('[Client] Error while sending a message. (Details: {})'.format(e))
 
 	def client_connection(self):
 		while not self.connection_with_server_established:
@@ -56,8 +63,5 @@ class Client:
 				self.connection_with_server_established = True
 				file_logger.info('[Client] Done. Client connected to {} on port {}.'.format(self.ip, self.port))
 			except Exception as e:
-				file_logger.error(f'[Client] Cannot connect to the server. Retrying...\n(Details: {e}')
+				file_logger.error(f'[Client] Cannot connect to the server with @IP {self.ip}. Retrying...\n(Details: {e}')
 				time.sleep(5)
-
-	def send_check_message(self):
-		self.sendData('check_message')
