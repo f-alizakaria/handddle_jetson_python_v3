@@ -65,3 +65,6 @@ class Client:
 			except Exception as e:
 				file_logger.error(f'[Client] Cannot connect to the server with @IP {self.ip}. Retrying...\n(Details: {e}')
 				time.sleep(5)
+
+	def send_check_message(self):
+		self.sendData('check_message')

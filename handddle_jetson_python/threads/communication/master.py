@@ -71,9 +71,6 @@ class Master(threading.Thread):
 				if not thread.is_alive():
 					self.server.client_threads.remove(thread)
 
-				if thread.timeout_raised:
-					client.connection_with_server_established = False
-
 			for client in self.clients_list:
 				client.send_check_message()
 
