@@ -53,6 +53,7 @@ class GUIThread(threading.Thread):
 
 		@app.route('/')
 		def index():
+			api_server_status = ''
 			start_date = datetime.now()
 			devices = []
 
@@ -77,21 +78,27 @@ class GUIThread(threading.Thread):
 						'last_data': {}
 					})
 
-			r = self.api_server_config['session'].get(
-				url=self.api_server_config['protocol'] + '://' + self.api_server_config['host'] + '/public/api/farm_commands',
-				params={
-					'organization_group.code': self.api_server_config['licence_key'],
-					'sent_date[gte]': int(datetime.now().timestamp())
-				},
-				timeout=10
-			)
+			try:
+				r = self.api_server_config['session'].get(
+					url=self.api_server_config['protocol'] + '://' + self.api_server_config[
+						'host'] + '/public/api/farm_commands',
+					params={
+						'organization_group.code': self.api_server_config['licence_key'],
+						'sent_date[gte]': int(datetime.now().timestamp())
+					},
+					timeout=10
+				)
+				api_server_status = 'OK'
+			except Exception as e:
+				file_logger.error(e)
+				api_server_status = 'Error'
 
 			return render_template(
 				'index.html',
 				check_date=start_date.strftime("%d/%m/%Y %H:%M:%S"),
 				app_host=self.api_server_config['host'],
 				app_check_date=datetime.now().strftime("%d/%m/%Y %H:%M:%S"),
-				app_status='OK' if r.status_code == 200 else 'Error',
+				app_status=api_server_status,
 				devices=devices,
 				display_data=self.display_data
 			)

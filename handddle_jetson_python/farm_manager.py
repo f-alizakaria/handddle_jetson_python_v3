@@ -235,7 +235,7 @@ if __name__ == '__main__':
 	farmManager = None
 
 	try:
-		config_filepath = os.environ['CONF_FILE'] if 'CONF_FILE' in os.environ else '/home/handddle/Documents/handddle_jetson_python_v3/handddle_jetson_python/config.yaml'
+		config_filepath = os.environ['CONF_FILE'] if 'CONF_FILE' in os.environ else './config.yaml'
 		farmManager = FarmManager(config_filepath)
 		farmManager.startProcesses()
 

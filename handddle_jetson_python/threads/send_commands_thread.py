@@ -87,13 +87,6 @@ class SendCommandsThread(threading.Thread):
 						except Exception as e:
 							file_logger.error('Error: ', e)
 
-				# Add transfered commands
-				while not self.transfer_queue.empty():
-					self.messages_to_send.append(self.transfer_queue.get())
-
-				# Actually send messages
-				self.sendCommandToSTM()
-
 			except requests.exceptions.ConnectionError as e:
 				self.is_connected = False
 				file_logger.error('The application is not connected to internet. Retrying...')
@@ -104,6 +97,15 @@ class SendCommandsThread(threading.Thread):
 
 			except Exception as e:
 				file_logger.critical(f'ERROR: An error occured while sending commands : {e}')
+
+			finally:
+				# Add transfered commands
+				while not self.transfer_queue.empty():
+					self.messages_to_send.append(self.transfer_queue.get())
+
+				# Actually send messages
+				self.sendCommandToSTM()
+				self.transfer_queue.queue.clear()
 
 	def sendCommandToSTM(self):
 
