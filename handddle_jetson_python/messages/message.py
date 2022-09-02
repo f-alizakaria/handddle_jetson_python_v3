@@ -36,22 +36,20 @@ class CommandMessage(Message):
 
 	COMMAND_TYPES = {
 		0: {'name': 'ack', 'values': [0, 1]},
-		1: {'name': 'update_watchdog', 'values': [1]},
-		2: {'name': 'force_reset', 'values': [1]},
-		3: {'name': 'air_extraction', 'values': [e for e in range(100+1)]},
+		1: {'name': 'on_off', 'values': [0, 1]},
+		2: {'name': 'door_closed', 'values': [0, 1]},
+		3: {'name': 'forcing_door', 'values': [1]},
 		4: {'name': 'temperature', 'values': [t for t in range(100+1)]},
-		5: {'name': 'led_color', 'values': [l for l in range(17+1)]},
-		6: {'name': 'system_on', 'values': [0, 1]},
-		7: {'name': 'door_closed', 'values': [0, 1]},
-		10: {'name': 'relay_on', 'values': [0, 1]},
-		11: {'name': 'tare', 'values': [1]},
-		12: {'name': 'get_weight', 'values': [1]},
-		14: {'name': 'dehumidifier_on', 'values': [0,1]},
-		15: {'name': 'sm_volume', 'values': [volume for volume in range(30+1)]},
-		16: {'name': 'sm_eq', 'values': [eq for eq in range(5+1)]},
-		17: {'name': 'sm_track', 'values': [track for track in range(5+1)]},
-		18: {'name': 'sm_repeat', 'values': [0,1]},
-		19: {'name': 'sm_simple_cmd', 'values': [1,2,3,4,5]}
+		5: {'name': 'led_color', 'values': [0, 1, 2, 3, 4, 5, 6, 7, 8]},
+		6: {'name': 'printing_state', 'values': [0, 1, 2, 3, 4, 5, 6, 7]},
+		7: {'name': 'air_extraction', 'values': [e for e in range(100+1)]},
+		8: {'name': 'relay_off', 'values': [0, 1]},
+		9: {'name': 'tare', 'values': [1]},
+		10: {'name': 'get_weight', 'values': [1]},
+		11: {'name': 'update_watchdog', 'values': [1]},
+		12: {'name': 'force_reset', 'values': [1]},
+		13: {'name': 'buzzer', 'values': [0,1]},
+		14: {'name': 'dehumidifier_on', 'values': [0,1]}
 	}
 
 	def __init__(self, subtype, content):
@@ -77,28 +75,27 @@ class CommandMessage(Message):
 class MainMessage(Message):
 
 	DATA_TYPES = {
-		0: {'name': 'led_color', 'class': 'default_data_persister'},
-		1: {'name': 'voc_index', 'class': 'default_data_persister'},
-		2: {'name': 'nox_index', 'class': 'default_data_persister'},
-		3: {'name': 'relay_on', 'class': 'default_data_persister'},
-		4: {'name': 'humidity_sp', 'class': 'default_data_persister'},
-		5: {'name': 'temperature_sp', 'class': 'temperature_data_persister'},
-		6: {'name': 'humidity', 'class': 'default_data_persister'},
-		7: {'name': 'temperature', 'class': 'temperature_data_persister'},
-		8: {'name': 'humidity_ss2', 'class': 'default_data_persister'},
-		9: {'name': 'temperature_ss2', 'class': 'temperature_data_persister'},
-		10: {'name': 'humidity_sen5x', 'class': 'default_data_persister'},
-		11: {'name': 'temperature_sen5x', 'class': 'temperature_data_persister'},  # Unused
-		12: {'name': 'voc_index_sen5x', 'class': 'default_data_persister'},
-		13: {'name': 'nox_index_sen5x', 'class': 'default_data_persister'},
-		14: {'name': 'weight', 'class': 'default_data_persister'},
-		15: {'name': 'pressure', 'class': 'default_data_persister'},
-		16: {'name': 'door_closed', 'class': 'door_closed_data_persister'},
-		17: {'name': 'pm1_sen5x', 'class': 'default_data_persister'},
-		18: {'name': 'pm2_5_sen5x', 'class': 'default_data_persister'},
-		19: {'name': 'pm4_sen5x', 'class': 'default_data_persister'},
-		20: {'name': 'pm10_sen5x', 'class': 'default_data_persister'},
-		22: {'name': 'typology', 'class': 'default_data_persister'}, # Unused
+		1: {'name': 'temperature', 'class': 'temperature_data_persister'},
+		2: {'name': 'humidity', 'class': 'default_data_persister'},
+		3: {'name': 'temperature_humidity', 'class': 'default_data_persister'}, # Unused
+		4: {'name': 'current_ee', 'class': 'default_data_persister'},
+		5: {'name': 'current_printer', 'class': 'default_data_persister'},
+		6: {'name': 'door_closed', 'class': 'door_closed_data_persister'},
+		7: {'name': 'pollution', 'class': 'default_data_persister'}, # Unused
+		8: {'name': 'sound', 'class': 'default_data_persister'}, # Unused
+		9: {'name': 'led_color', 'class': 'default_data_persister'},
+		10: {'name': 'printing_state', 'class': 'default_data_persister'}, # Unused
+		11: {'name': 'latch_status', 'class': 'default_data_persister'}, # Unused
+		12: {'name': 'weight', 'class': 'default_data_persister'},
+		13: {'name': 'pm1', 'class': 'default_data_persister'},
+		14: {'name': 'pm25', 'class': 'default_data_persister'},
+		15: {'name': 'pm10', 'class': 'default_data_persister'},
+		16: {'name': 'co2', 'class': 'default_data_persister'}, # Unused
+		17: {'name': 'tvoc', 'class': 'default_data_persister'}, # Unused
+		18: {'name': 'tvoc_warning', 'class': 'default_data_persister'}, # Unused
+		19: {'name': 'co2_warning', 'class': 'default_data_persister'}, # Unused
+		20: {'name': 'typology', 'class': 'default_data_persister'}, # Unused
+		21: {'name': 'relay_state_dehumidifier', 'class': 'default_data_persister'}, # Unused
 	}
 
 	def __init__(self, subtype, content):
@@ -122,8 +119,14 @@ class MainMessage(Message):
 class SecondaryMessage(Message):
 
 	DATA_TYPES = {
-		0: 'tachy_extraction',
-		1: 'ee_temperature',
+		1: 'tachy_extraction',
+		2: 'tachy_heating',
+		3: 'rack_temperature',
+		4: 'heating_temperature',
+		5: 'pressure',
+		6: 'relay_state',
+		7: 'buzzer_state',
+        8: 'preheat_over'
 	}
 
 	def __init__(self, subtype, content):
@@ -142,11 +145,12 @@ class SecondaryMessage(Message):
 class ErrorMessage(Message):
 
 	DATA_TYPES = {
-		0: 'left_latch',
-		1: 'right_latch',
-		2: 'i2c_smart_power',
-		3: 'i2c_smart_sensor_1',
-		4: 'i2c_smart_sensor_2'
+		1: 'tachy_extraction',
+		2: 'heater',
+		3: 'environment_temperature',
+		4: 'environment_humidity',
+		5: 'heater_warning',
+		6: 'rack_warning'
 	}
 
 	def __init__(self, subtype, content):
@@ -166,6 +170,11 @@ class InformationMessage(Message):
 
 	DATA_TYPES = {
 		0: 'ack',
+		1: 'day_night',
+		2: 'temperature_manual_mode',
+		3: 'filtration_manual_mode',
+		4: 'pollution_threshold',
+		5: 'door_state'
 	}
 
 	def __init__(self, subtype, content):
@@ -179,4 +188,3 @@ class InformationMessage(Message):
 
 	def __repr__(self):
 		return '[Information message | Data name: {} | Data value: {}]'.format(self.data_name, self.data_value)
-
