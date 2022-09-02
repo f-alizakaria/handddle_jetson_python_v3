@@ -93,7 +93,7 @@ class SendCommandsThread(threading.Thread):
 
 			except requests.exceptions.ReadTimeout as e:
 				self.is_connected = False
-				file_logger.error('The application could not reach the web server. Retrying...\nDetails:', e)
+				file_logger.error(f'The application could not reach the web server. Retrying...\nDetails: {e}')
 
 			except Exception as e:
 				file_logger.critical(f'ERROR: An error occured while sending commands : {e}')
