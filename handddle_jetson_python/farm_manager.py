@@ -13,6 +13,7 @@ from threads.watchdog_thread import WatchdogThread
 from threads.scanner_thread import ScannerThread
 from threads.gui_thread import GUIThread
 from threads.demo_thread import DemoThread
+from messages.tlv_message import TLVMessage
 
 from threads.communication.master import Master
 from threads.communication.slave import Slave
@@ -57,6 +58,8 @@ class FarmManager:
 
 		# Logging
 		self.logger = LoggingService('main').getLogger()
+
+		TLVMessage.LOGGER = LoggingService('tlv_message').getLogger()
 
 		# Start desired system
 		self.startMasterOrSlave()

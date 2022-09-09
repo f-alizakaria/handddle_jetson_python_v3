@@ -10,10 +10,10 @@ class TLVMessage:
 	HEADER_LENGTH = 4
 	CORRECT_TYPE = 257 # 0x0101
 
+	LOGGER = None
+
 	def __init__(self, hex_data):
 		self.hex_data = hex_data
-
-		self.logger = LoggingService('tlv_message').getLogger()
 
 		stream = io.BytesIO(self.hex_data)
 		stream.seek(0)
@@ -21,18 +21,18 @@ class TLVMessage:
 		self.type = int.from_bytes(stream.read(2), byteorder='big')
 
 		if self.type != TLVMessage.CORRECT_TYPE:
-			self.logger.critical('Incorrect TLVMessage type.')
+			TLVMessage.LOGGER.critical('Incorrect TLVMessage type.')
 
 		self.length = int.from_bytes(stream.read(2), byteorder='big')
 
 		total_length = stream.getbuffer().nbytes
 
 		if self.length != total_length - TLVMessage.HEADER_LENGTH:
-			self.logger.critical('Incorrect TLVMessage length.')
+			TLVMessage.LOGGER.critical('Incorrect TLVMessage length.')
 
 		# UID + Payload
 		self.uid = str(stream.read(4).hex()).upper()
-		self.payload = self.TLVMessage.parseTLVMessagePayload(stream.read())
+		self.payload = TLVMessage.parseTLVMessagePayload(stream.read())
 
 	def __str__(self):
 		content = 'TLV Message\n'
@@ -43,8 +43,8 @@ class TLVMessage:
 
 		return content
 
-
-	def parseTLVMessagePayload(self, rawPayload):
+	@staticmethod
+	def parseTLVMessagePayload(rawPayload):
 		stream = io.BytesIO(rawPayload)
 		total_length = stream.getbuffer().nbytes
 
@@ -57,7 +57,7 @@ class TLVMessage:
 			data.type = int.from_bytes(stream.read(1), byteorder='big')
 
 			if data.type not in TLVData.MESSAGE_TYPES.values():
-				self.logger.critical('Incorrect TLVData type: {}'.format(data.type))
+				TLVMessage.LOGGER.critical('Incorrect TLVData type: {}'.format(data.type))
 
 			data.subtype = int.from_bytes(stream.read(1), byteorder='big')
 			data.length = int.from_bytes(stream.read(2), byteorder='big')
@@ -67,7 +67,7 @@ class TLVMessage:
 				break
 
 			if data.length > total_length - i:
-				logger.critical('Incorrect TLVData length.')
+				TLVMessage.LOGGER.critical('Incorrect TLVData length.')
 
 			# Parse the message depending on the message type
 			if data.type == TLVData.MESSAGE_TYPES['INTERNAL']:
@@ -92,7 +92,8 @@ class TLVMessage:
 
 		return data_list
 
-	def createTLVCommandFromJson(self, hex_uid, command_name, command_value):
+	@staticmethod
+	def createTLVCommandFromJson(hex_uid, command_name, command_value):
 		hexa  = '{:04x}'.format(TLVMessage.CORRECT_TYPE) # Type
 		hexa += '{:04x}'.format(16) # Length
 		hexa += str(hex_uid).zfill(8) # UID
@@ -105,7 +106,7 @@ class TLVMessage:
 				command_id = _command_id
 
 		if command_id is None:
-			self.logger.critical('Unsupported command: {}'.format(command_name))
+			TLVMessage.LOGGER.critical('Unsupported command: {}'.format(command_name))
 
 		if command_value not in CommandMessage.COMMAND_TYPES[command_id]['values']:
 			self.logger.critical('Unsupported value for the {} command: {}'.format(
