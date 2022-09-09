@@ -25,7 +25,7 @@ file_logger.propagate = False
 
 
 class SendCommandsThread(threading.Thread):
-	def __init__(self, thread, master, slaves, profile, se, api_server_config, transfer_queue, debug):
+	def __init__(self, thread, master, slaves, profile, se, api_server_config, transfer_queue, debug, broadcast):
 		threading.Thread.__init__(self)
 		self.thread = thread
 		self.master = master
@@ -40,6 +40,8 @@ class SendCommandsThread(threading.Thread):
 		self.is_connected = True
 
 		self.profile = profile
+
+		self.broadcast_uid = broadcast['uid']
 
 	def run(self):
 
@@ -69,12 +71,18 @@ class SendCommandsThread(threading.Thread):
 					self.last_check_date = int(time.time())
 
 					for command in commands_list:
-						file_logger.info("[APP] Command : ", command)
+						file_logger.info(f"[APP] Command : {command}")
 						try:
-							if command['system_code'] in self.master['system_codes']:
-								message, hexa = TLVMessage.createTLVCommandFromJson(self.master['system_codes'][command['system_code']],
-																					command['action'],
-																					int(command['data']))
+							if command['system_code'] in self.master['system_codes'] or command['system_code'] == 'broadcast':
+
+								if command['system_code'] == 'broadcast':
+									message, hexa = TLVMessage.createTLVCommandFromJson(
+										self.broadcast_uid, 'buzzer', 0
+									)
+								else:
+									message, hexa = TLVMessage.createTLVCommandFromJson(self.master['system_codes'][command['system_code']],
+																						command['action'],
+																						int(command['data']))
 								self.messages_to_send.append(message)
 
 								# Test - Uncomment this line to check if the message is well formated
@@ -85,7 +93,7 @@ class SendCommandsThread(threading.Thread):
 								[self.thread.sendCommandToSlave(command) for slave in self.slaves if command['system_code'] in slave['system_codes']]
 
 						except Exception as e:
-							file_logger.error('Error: ', e)
+							file_logger.error(f'Error: {e}')
 
 			except requests.exceptions.ConnectionError as e:
 				self.is_connected = False

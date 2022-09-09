@@ -79,7 +79,7 @@ class FarmManager:
 
 		# Multithreading
 		self.readDataThread = ReadDataThread(self.serverClientThread, self.master, self.slaves, self.profile, self.se, self.api_server_config, self.influxdb_config, self.transfer_queue, self.status_dict, self.last_data, self.debug)
-		self.sendCommandsThread = SendCommandsThread(self.serverClientThread, self.master, self.slaves, self.profile, self.se, self.api_server_config, self.transfer_queue, self.debug)
+		self.sendCommandsThread = SendCommandsThread(self.serverClientThread, self.master, self.slaves, self.profile, self.se, self.api_server_config, self.transfer_queue, self.debug, self.broadcast)
 		self.watchdogThread = WatchdogThread(self.watchdog_interval, self.transfer_queue, self.broadcast, self.debug)
 		self.scannerThread = ScannerThread(self.scanner_config, self.api_server_config, self.debug)
 		self.guiThread = GUIThread(self.master, self.slaves, self.profile, self.broadcast, self.api_server_config, self.status_dict, self.last_data, self.display_data, self.transfer_queue, self.debug)
@@ -94,7 +94,7 @@ class FarmManager:
 
 		if self.demo:
 			self.demoThread = DemoThread(self.transfer_queue, self.debug)
-			#self.threads.append(self.demoThread)
+			# self.threads.append(self.demoThread)
 
 	def readConfigFile(self, config_path):
 		with open(config_path, 'r') as config_file:

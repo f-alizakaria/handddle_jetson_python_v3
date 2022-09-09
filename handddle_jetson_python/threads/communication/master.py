@@ -96,4 +96,4 @@ class Master(threading.Thread):
 		data = eval(data)
 
 		self.influxdb_service.writeDataBySystemCode(data_to_send=data)
-		file_logger.info('[Master] Data sent to the cloud.')
+		file_logger.info(f'[Master] Data sent to the cloud.\n{data}')
