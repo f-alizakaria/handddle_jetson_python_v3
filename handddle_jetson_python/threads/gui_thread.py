@@ -7,20 +7,8 @@ from datetime import datetime
 from messages.tlv_message import TLVMessage
 from waitress import serve
 
-import logging
-from logging.handlers import TimedRotatingFileHandler
+from lib.logging_service import LoggingService
 
-LOG_FILE = "/var/log/handddle_jetson_python/gui/gui.log"
-FORMATTER = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s: %(message)s")
-
-file_logger = logging.getLogger('gui')
-file_logger.setLevel(logging.DEBUG)
-
-file_handler = TimedRotatingFileHandler(LOG_FILE, when="midnight", interval=1, backupCount=7)
-file_handler.setFormatter(FORMATTER)
-
-file_logger.addHandler(file_handler)
-file_logger.propagate = False
 
 ##################
 # Smart Farm GUI #
@@ -39,12 +27,14 @@ class GUIThread(threading.Thread):
 		self.display_data = display_data
 		self.transfer_queue = transfer_queue
 		self.debug = debug
+		self.logger = LoggingService('gui').getLogger()
+
 
 		self.profile = profile
 
 	def run(self):
 
-		file_logger.info('Started GUIThread')
+		self.logger.info('Started GUIThread')
 
 		template_folder = dirname(dirname(abspath(__file__))) + '/templates/'
 		app = Flask(__name__, template_folder=template_folder)
@@ -90,7 +80,7 @@ class GUIThread(threading.Thread):
 				)
 				api_server_status = 'OK'
 			except Exception as e:
-				file_logger.error(e)
+				self.logger.error(e)
 				api_server_status = 'Error'
 
 			return render_template(

@@ -3,20 +3,8 @@ import time
 
 from messages.tlv_message import TLVMessage
 
-import logging
-from logging.handlers import TimedRotatingFileHandler
+from lib.logging_service import LoggingService
 
-LOG_FILE = "/var/log/handddle_jetson_python/watchdog/watchdog.log"
-FORMATTER = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s: %(message)s")
-
-file_logger = logging.getLogger('watchdog')
-file_logger.setLevel(logging.DEBUG)
-
-file_handler = TimedRotatingFileHandler(LOG_FILE, when="midnight", interval=1, backupCount=7)
-file_handler.setFormatter(FORMATTER)
-
-file_logger.addHandler(file_handler)
-file_logger.propagate = False
 
 #######################
 # Smart Farm Watchdog #
@@ -32,11 +20,13 @@ class WatchdogThread(threading.Thread):
 		self.interval = interval
 		self.count = 0
 
+		self.logger = LoggingService('watchdog').getLogger()
+
 		self.broadcast_uid = broadcast['uid']
 
 	def run(self):
 
-		file_logger.info('Started WatchdogThread')
+		self.logger.info('Started WatchdogThread')
 
 		while True:  # Infinite loop
 			try:
@@ -53,4 +43,4 @@ class WatchdogThread(threading.Thread):
 					self.transfer_queue.put(message)
 
 			except Exception as e:
-				file_logger.critical(f'ERROR: An error occured while sending the watchdog command. (Details: {e})')
+				self.logger.critical(f'ERROR: An error occured while sending the watchdog command. (Details: {e})')

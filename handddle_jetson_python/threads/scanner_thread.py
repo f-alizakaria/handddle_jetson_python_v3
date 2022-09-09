@@ -4,20 +4,8 @@ import serial.tools.list_ports as port_list
 import time
 import webbrowser
 
-import logging
-from logging.handlers import TimedRotatingFileHandler
+from lib.logging_service import LoggingService
 
-LOG_FILE = "/var/log/handddle_jetson_python/scanner/scanner.log"
-FORMATTER = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s: %(message)s")
-
-file_logger = logging.getLogger('scanner')
-file_logger.setLevel(logging.DEBUG)
-
-file_handler = TimedRotatingFileHandler(LOG_FILE, when="midnight", interval=1, backupCount=7)
-file_handler.setFormatter(FORMATTER)
-
-file_logger.addHandler(file_handler)
-file_logger.propagate = False
 
 ######################
 # Smart Farm Scanner #
@@ -31,6 +19,9 @@ class ScannerThread(threading.Thread):
 		self.scanner_baudrate = scanner_config['baudrate']
 		self.api_server_config = api_server_config
 		self.debug = debug
+
+		self.logger = LoggingService('scanner').getLogger()
+
 
 		self.scanner = None
 		self.checkUSBScanner()
@@ -50,21 +41,21 @@ class ScannerThread(threading.Thread):
 
 			except Exception as e:
 				self.scanner = None
-				file_logger.critical('Error while reading "{}" port serial number. (Details: {})'.format(port_name, e))
+				self.logger.critical('Error while reading "{}" port serial number. (Details: {})'.format(port_name, e))
 
 	def closePorts(self):
 		if self.scanner is not None:
 			try:
 				self.scanner.close()
 			except Exception as e:
-				file_logger.critical('Cannot close scanner port {}: {}'.format(port_name, e))
+				self.logger.critical('Cannot close scanner port {}: {}'.format(port_name, e))
 
 	def run(self):
 
 		if self.scanner is None:
 			return
 
-		file_logger.info('Started ScannerThread')
+		self.logger.info('Started ScannerThread')
 
 		while True:
 			time.sleep(0.5)
@@ -83,7 +74,7 @@ class ScannerThread(threading.Thread):
 					)
 
 			except Exception as e:
-				file_logger.critical(f'ERROR: An error occured while dealing with scanner data. (Details: {e})')
+				self.logger.critical(f'ERROR: An error occured while dealing with scanner data. (Details: {e})')
 				break
 
 		self.closePorts()

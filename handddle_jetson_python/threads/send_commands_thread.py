@@ -4,20 +4,8 @@ import requests
 import os
 from messages.tlv_message import TLVMessage
 
-import logging
-from logging.handlers import TimedRotatingFileHandler
+from lib.logging_service import LoggingService
 
-LOG_FILE = "/var/log/handddle_jetson_python/commands/commands.log"
-FORMATTER = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s: %(message)s")
-
-file_logger = logging.getLogger('commands')
-file_logger.setLevel(logging.DEBUG)
-
-file_handler = TimedRotatingFileHandler(LOG_FILE, when="midnight", interval=1, backupCount=7)
-file_handler.setFormatter(FORMATTER)
-
-file_logger.addHandler(file_handler)
-file_logger.propagate = False
 
 ################################
 # Read received commands files #
@@ -39,13 +27,16 @@ class SendCommandsThread(threading.Thread):
 		self.last_check_date = int(time.time())
 		self.is_connected = True
 
+		self.logger = LoggingService('commands').getLogger()
+
+
 		self.profile = profile
 
 		self.broadcast_uid = broadcast['uid']
 
 	def run(self):
 
-		file_logger.info('Started SendCommandsThread')
+		self.logger.info('Started SendCommandsThread')
 
 		while True:  # Infinite loop
 			try:
@@ -71,7 +62,7 @@ class SendCommandsThread(threading.Thread):
 					self.last_check_date = int(time.time())
 
 					for command in commands_list:
-						file_logger.info(f"[APP] Command : {command}")
+						self.logger.info(f"[APP] Command : {command}")
 						try:
 							if command['system_code'] in self.master['system_codes'] or command['system_code'] == 'broadcast':
 
@@ -86,25 +77,25 @@ class SendCommandsThread(threading.Thread):
 								self.messages_to_send.append(message)
 
 								# Test - Uncomment this line to check if the message is well formated
-								# file_logger.info(TLVMessage(io.BytesIO(message)))
+								# self.logger.info(TLVMessage(io.BytesIO(message)))
 
 							else:
 
 								[self.thread.sendCommandToSlave(command) for slave in self.slaves if command['system_code'] in slave['system_codes']]
 
 						except Exception as e:
-							file_logger.error(f'Error: {e}')
+							self.logger.error(f'Error: {e}')
 
 			except requests.exceptions.ConnectionError as e:
 				self.is_connected = False
-				file_logger.error('The application is not connected to internet. Retrying...')
+				self.logger.error('The application is not connected to internet. Retrying...')
 
 			except requests.exceptions.ReadTimeout as e:
 				self.is_connected = False
-				file_logger.error(f'The application could not reach the web server. Retrying...\nDetails: {e}')
+				self.logger.error(f'The application could not reach the web server. Retrying...\nDetails: {e}')
 
 			except Exception as e:
-				file_logger.critical(f'ERROR: An error occured while sending commands : {e}')
+				self.logger.critical(f'ERROR: An error occured while sending commands : {e}')
 
 			finally:
 				# Add transfered commands
@@ -121,7 +112,7 @@ class SendCommandsThread(threading.Thread):
 
 			if not self.debug:
 
-				file_logger.info('[ME] Command sent to the STM32.')
+				self.logger.info('[ME] Command sent to the STM32.')
 				# Send the message to all connected STM32
 				try:
 					for port_name in self.se:
@@ -129,9 +120,9 @@ class SendCommandsThread(threading.Thread):
 							self.se[port_name].write(message[i:i + 1])
 							time.sleep(0.001)
 				except OSError:
-					file_logger.critical('A STM32 was disconnected.\nThe program need to restart!')
+					self.logger.critical('A STM32 was disconnected.\nThe program need to restart!')
 					os._exit(0)
 				except Exception as e:
-					file_logger.error(e)
+					self.logger.error(e)
 
-			file_logger.info('>>> Sent command: {:040x}'.format(int.from_bytes(message, byteorder='big')))
+			self.logger.info('>>> Sent command: {:040x}'.format(int.from_bytes(message, byteorder='big')))

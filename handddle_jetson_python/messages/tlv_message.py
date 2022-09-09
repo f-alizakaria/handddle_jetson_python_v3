@@ -2,21 +2,7 @@ import io
 
 from messages.tlv_data import TLVData
 from messages.message import *
-
-import logging
-from logging.handlers import TimedRotatingFileHandler
-
-LOG_FILE = "/var/log/handddle_jetson_python/tlv_message/tlv_message.log"
-FORMATTER = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s: %(message)s")
-
-file_logger = logging.getLogger('tlv_message')
-file_logger.setLevel(logging.DEBUG)
-
-file_handler = TimedRotatingFileHandler(LOG_FILE, when="midnight", interval=1, backupCount=7)
-file_handler.setFormatter(FORMATTER)
-
-file_logger.addHandler(file_handler)
-file_logger.propagate = False
+from lib.logging_service import LoggingService
 
 
 class TLVMessage:
@@ -27,24 +13,26 @@ class TLVMessage:
 	def __init__(self, hex_data):
 		self.hex_data = hex_data
 
+		self.logger = LoggingService('tlv_message').getLogger()
+
 		stream = io.BytesIO(self.hex_data)
 		stream.seek(0)
 
 		self.type = int.from_bytes(stream.read(2), byteorder='big')
 
 		if self.type != TLVMessage.CORRECT_TYPE:
-			file_logger.critical('Incorrect TLVMessage type.')
+			self.logger.critical('Incorrect TLVMessage type.')
 
 		self.length = int.from_bytes(stream.read(2), byteorder='big')
 
 		total_length = stream.getbuffer().nbytes
 
 		if self.length != total_length - TLVMessage.HEADER_LENGTH:
-			file_logger.critical('Incorrect TLVMessage length.')
+			self.logger.critical('Incorrect TLVMessage length.')
 
 		# UID + Payload
 		self.uid = str(stream.read(4).hex()).upper()
-		self.payload = TLVMessage.parseTLVMessagePayload(stream.read())
+		self.payload = self.TLVMessage.parseTLVMessagePayload(stream.read())
 
 	def __str__(self):
 		content = 'TLV Message\n'
@@ -55,8 +43,8 @@ class TLVMessage:
 
 		return content
 
-	@staticmethod
-	def parseTLVMessagePayload(rawPayload):
+
+	def parseTLVMessagePayload(self, rawPayload):
 		stream = io.BytesIO(rawPayload)
 		total_length = stream.getbuffer().nbytes
 
@@ -69,7 +57,7 @@ class TLVMessage:
 			data.type = int.from_bytes(stream.read(1), byteorder='big')
 
 			if data.type not in TLVData.MESSAGE_TYPES.values():
-				file_logger.critical('Incorrect TLVData type: {}'.format(data.type))
+				self.logger.critical('Incorrect TLVData type: {}'.format(data.type))
 
 			data.subtype = int.from_bytes(stream.read(1), byteorder='big')
 			data.length = int.from_bytes(stream.read(2), byteorder='big')
@@ -79,7 +67,7 @@ class TLVMessage:
 				break
 
 			if data.length > total_length - i:
-				file_logger.critical('Incorrect TLVData length.')
+				logger.critical('Incorrect TLVData length.')
 
 			# Parse the message depending on the message type
 			if data.type == TLVData.MESSAGE_TYPES['INTERNAL']:
@@ -104,8 +92,7 @@ class TLVMessage:
 
 		return data_list
 
-	@staticmethod
-	def createTLVCommandFromJson(hex_uid, command_name, command_value):
+	def createTLVCommandFromJson(self, hex_uid, command_name, command_value):
 		hexa  = '{:04x}'.format(TLVMessage.CORRECT_TYPE) # Type
 		hexa += '{:04x}'.format(16) # Length
 		hexa += str(hex_uid).zfill(8) # UID
@@ -118,10 +105,10 @@ class TLVMessage:
 				command_id = _command_id
 
 		if command_id is None:
-			file_logger.critical('Unsupported command: {}'.format(command_name))
+			self.logger.critical('Unsupported command: {}'.format(command_name))
 
 		if command_value not in CommandMessage.COMMAND_TYPES[command_id]['values']:
-			file_logger.critical('Unsupported value for the {} command: {}'.format(
+			self.logger.critical('Unsupported value for the {} command: {}'.format(
 				command_name, command_value
 			))
 

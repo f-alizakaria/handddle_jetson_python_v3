@@ -17,20 +17,8 @@ from threads.demo_thread import DemoThread
 from threads.communication.master import Master
 from threads.communication.slave import Slave
 
-import logging
-from logging.handlers import TimedRotatingFileHandler
+from lib.logging_service import LoggingService
 
-LOG_FILE = "/var/log/handddle_jetson_python/farm_manager/farm_manager.log"
-FORMATTER = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s: %(message)s")
-
-file_logger = logging.getLogger('farm_manager')
-file_logger.setLevel(logging.DEBUG)
-
-file_handler = TimedRotatingFileHandler(LOG_FILE, when="midnight", interval=1, backupCount=7)
-file_handler.setFormatter(FORMATTER)
-
-file_logger.addHandler(file_handler)
-file_logger.propagate = False
 
 
 class FarmManager:
@@ -63,8 +51,12 @@ class FarmManager:
 		self.serverClientThread = None
 
 		self.config = self.readConfigFile(config_path=self.config_filepath)
-
 		self.loadConfiguration()
+
+		LoggingService.config = self.config['logging']
+
+		# Logging
+		self.logger = LoggingService('main').getLogger()
 
 		# Start desired system
 		self.startMasterOrSlave()
@@ -121,8 +113,8 @@ class FarmManager:
 		self.watchdog_interval = self.config['watchdog_interval']
 
 	def loadUSBPorts(self):
-		file_logger.info('------------------------------')
-		file_logger.info('Ports initilization:')
+		self.logger.info('------------------------------')
+		self.logger.info('Ports initilization:')
 
 		if not self.debug:
 
@@ -149,14 +141,14 @@ class FarmManager:
 					self.se[port_full_name].flushInput()
 					self.se[port_full_name].flushOutput()
 
-					file_logger.info('\t- Port {} initialized.'.format(port_full_name))
+					self.logger.info('\t- Port {} initialized.'.format(port_full_name))
 
 		else:
 			self.se['P0'] = None
-			file_logger.debug('\t- Port P0 initialized [DEBUG].')
+			self.logger.debug('\t- Port P0 initialized [DEBUG].')
 
-		file_logger.info('{} port(s) initialized.'.format(len(self.se)))
-		file_logger.info('------------------------------')
+		self.logger.info('{} port(s) initialized.'.format(len(self.se)))
+		self.logger.info('------------------------------')
 
 	def closePorts(self):
 		if not self.debug:
@@ -164,7 +156,7 @@ class FarmManager:
 				try:
 					self.se[port_name].close()
 				except Exception as e:
-					file_logger.critical('Cannot close port {}: {}'.format(port_name, e))
+					self.logger.critical('Cannot close port {}: {}'.format(port_name, e))
 
 	def startProcesses(self):
 
@@ -183,7 +175,7 @@ class FarmManager:
 	def getMasterAndSlaves(self, config):
 
 		if 'systems' not in config:
-			file_logger.critical('No systems defined.')
+			self.logger.critical('No systems defined.')
 
 		master = None
 		slaves = []
@@ -191,11 +183,11 @@ class FarmManager:
 		for system in config['systems']:
 
 			if 'ip' not in system or 'port' not in system:
-				file_logger.critical('Bad systems configuration.')
+				self.logger.critical('Bad systems configuration.')
 
 			if system['profile'] == 'master':
 				if master is not None:
-					file_logger.error('Only one system can be a master system.')
+					self.logger.error('Only one system can be a master system.')
 
 				master = system
 
@@ -203,11 +195,11 @@ class FarmManager:
 				slaves.append(system)
 
 			else:
-				file_logger.error("Only 'master' and 'slave' system can be defined."
+				self.logger.error("Only 'master' and 'slave' system can be defined."
 								"\nPlease check the YAML configuration file")
 
 		if master is None:
-			file_logger.critical('A master system must be defined.')
+			self.logger.critical('A master system must be defined.')
 
 		return master, slaves
 
@@ -240,7 +232,7 @@ if __name__ == '__main__':
 		farmManager.startProcesses()
 
 	except Exception as e:
-		file_logger.error(f'Error: {e}')
+		raise AttributeError(f'Error: {e}')
 
 	finally:
 		if farmManager is not None:

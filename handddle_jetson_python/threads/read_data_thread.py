@@ -7,20 +7,8 @@ from lib.influxdb_service import InfluxdbService
 from messages.tlv_message import TLVMessage
 from messages.message import *
 
-import logging
-from logging.handlers import TimedRotatingFileHandler
+from lib.logging_service import LoggingService
 
-LOG_FILE = "/var/log/handddle_jetson_python/datas/datas.log"
-FORMATTER = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s: %(message)s")
-
-file_logger = logging.getLogger('datas')
-file_logger.setLevel(logging.DEBUG)
-
-file_handler = TimedRotatingFileHandler(LOG_FILE, when="midnight", interval=1, backupCount=7)
-file_handler.setFormatter(FORMATTER)
-
-file_logger.addHandler(file_handler)
-file_logger.propagate = False
 
 ######################
 # Read received data #
@@ -42,12 +30,14 @@ class ReadDataThread(threading.Thread):
 		self.last_data = last_data
 		self.debug = debug
 		self.influxdb_service = InfluxdbService(influxdb_config, debug)
+		self.logger = LoggingService('data').getLogger()
+
 
 		self.slaves_uid = [uid for slave in self.slaves for system_code, uid in slave['system_codes'].items()]
 
 	def run(self):
 
-		file_logger.info('Started ReadDataThread')
+		self.logger.info('Started ReadDataThread')
 		time.sleep(0.5)
 
 		while True:  # Infinite loop
@@ -114,7 +104,7 @@ class ReadDataThread(threading.Thread):
 												   for system_code, uid in slave['system_codes'].items()
 												   if tlv_message.uid == uid][0]
 								else:
-									file_logger.critical('Unknown UID ({}).'.format(tlv_message.uid))
+									self.logger.critical('Unknown UID ({}).'.format(tlv_message.uid))
 
 								# Manage received data
 								for tlv_data in tlv_message.payload:
@@ -136,7 +126,7 @@ class ReadDataThread(threading.Thread):
 											data_to_send[system_code] = {}
 										data_to_send[system_code][message.data.getKey()] = message.data.getValue()
 
-										file_logger.info('<<< Message received on port ' + port_name + ': ' + str(message))
+										self.logger.info('<<< Message received on port ' + port_name + ': ' + str(message))
 
 										self.status_dict[tlv_message.uid] = {
 											'system_code': system_code, 'check_date': datetime.now(), 'port': port_name
@@ -151,25 +141,25 @@ class ReadDataThread(threading.Thread):
 										self.transfer_queue.put(tlv_message.hex_data)
 
 							except requests.exceptions.ConnectionError as e:
-								file_logger.error('The application is not connected to internet. No data sent.')
+								self.logger.error('The application is not connected to internet. No data sent.')
 
 							except requests.exceptions.ReadTimeout as e:
-								file_logger.error('The application could not reach the web server. No data sent.\nDetails:', e)
+								self.logger.error('The application could not reach the web server. No data sent.\nDetails:', e)
 
 							except Exception as e:
-								file_logger.error('Error with a message received on port {}: {} (Raw message: {})'.format(port_name, e, chunk.hex()))
+								self.logger.error('Error with a message received on port {}: {} (Raw message: {})'.format(port_name, e, chunk.hex()))
 
-				file_logger.info(data_to_send)
+				self.logger.info(data_to_send)
 
 				if self.profile == 'master' and has_data_to_send:
 					# Send all data to influxdb
 					self.influxdb_service.writeDataBySystemCode(data_to_send=data_to_send)
-					file_logger.info(f'[Master][DataThread] Datas sent to the cloud. (Details : {data_to_send})')
+					self.logger.info(f'[Master][DataThread] Datas sent to the cloud. (Details : {data_to_send})')
 
 				elif self.profile == 'slave' and has_data_to_send:
 					# send data to the master's server
 					self.thread.sendDataToMaster(data=data_to_send)
-					file_logger.info('[Slave][DataThread] Datas sent to the master system.')
+					self.logger.info('[Slave][DataThread] Datas sent to the master system.')
 
 			except Exception as e:
-				file_logger.critical(f'ERROR: An error occured while dealing with received data : {e}')
+				self.logger.critical(f'ERROR: An error occured while dealing with received data : {e}')

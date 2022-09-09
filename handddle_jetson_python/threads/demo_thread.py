@@ -3,20 +3,8 @@ import time
 
 from messages.tlv_message import TLVMessage
 
-import logging
-from logging.handlers import TimedRotatingFileHandler
+from lib.logging_service import LoggingService
 
-LOG_FILE = "/var/log/handddle_jetson_python/demo/demo.log"
-FORMATTER = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s: %(message)s")
-
-file_logger = logging.getLogger('demo')
-file_logger.setLevel(logging.DEBUG)
-
-file_handler = TimedRotatingFileHandler(LOG_FILE, when="midnight", interval=1, backupCount=7)
-file_handler.setFormatter(FORMATTER)
-
-file_logger.addHandler(file_handler)
-file_logger.propagate = False
 
 ###################
 # Smart Farm Demo #
@@ -30,6 +18,8 @@ class DemoThread(threading.Thread):
 		self.uids = master['system_codes'] if profile == 'master' else slaves[0]['system_codes']
 		self.debug = debug
 
+		self.logger = LoggingService('demo').getLogger()
+
 		self.broadcast_uid = 'CFFFFFFF'
 		for uid, system_code in self.uids.items():
 			if system_code == 'broadcast':
@@ -37,14 +27,14 @@ class DemoThread(threading.Thread):
 
 	def run(self):
 
-		file_logger.info('Started DemoThread')
+		self.logger.info('Started DemoThread')
 
 		while True:  # Infinite loop
 			try:
 				self.run_demo()
 
 			except Exception as e:
-				file_logger.critical('ERROR: An error occured while running the demo.')
+				self.logger.critical('ERROR: An error occured while running the demo.')
 
 	def run_demo(self):
 

@@ -8,7 +8,7 @@ systems:
     port: 5050
     system_codes:
       T-02: C1062208
-    start: false
+    start: true
 
   - profile: slave
     ip: 169.254.1.11
@@ -16,12 +16,10 @@ systems:
     system_codes:
       T-01: C1062201
       R-01: C2062201
-      R-11: C2062202
-    start: true
+    start: false
 
 
 broadcast:
-  ip: 127.255.255.255
   uid: CFFFFFFF
 
 watchdog_interval: 4 # Seconds
@@ -41,6 +39,10 @@ influxdb:
 scanner:
   serial_base: 0x18502
   baudrate: 9600
+
+logging:
+  directory: logs
+  level: DEBUG
 
 debug: false
 

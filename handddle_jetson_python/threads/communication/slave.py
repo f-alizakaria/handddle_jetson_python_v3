@@ -5,20 +5,8 @@ from threads.communication.server import Server
 from threads.communication.client import Client
 from messages.tlv_message import TLVMessage
 
-import logging
-from logging.handlers import TimedRotatingFileHandler
+from lib.logging_service import LoggingService
 
-LOG_FILE = "/var/log/handddle_jetson_python/slave/slave.log"
-FORMATTER = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s: %(message)s")
-
-file_logger = logging.getLogger('slave')
-file_logger.setLevel(logging.DEBUG)
-
-file_handler = TimedRotatingFileHandler(LOG_FILE, when="midnight", interval=1, backupCount=7)
-file_handler.setFormatter(FORMATTER)
-
-file_logger.addHandler(file_handler)
-file_logger.propagate = False
 
 class Slave(threading.Thread):
 
@@ -34,31 +22,33 @@ class Slave(threading.Thread):
 		self.server = None
 		self.client = None
 
+		self.logger = LoggingService('slave').getLogger()
+
 	def run(self):
 		# Slave = 1 server + 1 client
 
 		# Init the server
-		file_logger.info('[Slave] Initializing slave system.')
+		self.logger.info('[Slave] Initializing slave system.')
 
-		file_logger.info('[Slave] Creating server...')
+		self.logger.info('[Slave] Creating server...')
 		self.server = Server(self.slave['ip'], self.slave['port'], self.sendCommandToTransferQueue)
 		self.server.start()
 
 		# A slave accepts only one connection (from the master)
-		file_logger.info('[Slave] Waiting for the master client to connect...')
+		self.logger.info('[Slave] Waiting for the master client to connect...')
 
 		# Init the client
 		# Here, the master client should already be connected to the slave server
-		file_logger.info('[Slave] Creating client...')
+		self.logger.info('[Slave] Creating client...')
 		while self.client is None:
 			try:
 				self.client = Client(self.master['ip'], self.master['port'], self.connection_with_master_lost)
 
 			except ConnectionRefusedError:
-				file_logger.error('[Slave] Cannot reach the master system. Retrying...')
+				self.logger.error('[Slave] Cannot reach the master system. Retrying...')
 				time.sleep(5)
 
-		file_logger.info('[Slave] System fully connected to the master system.')
+		self.logger.info('[Slave] System fully connected to the master system.')
 
 		self.master_initialized = True
 
@@ -69,16 +59,16 @@ class Slave(threading.Thread):
 				if not thread.is_alive():
 					self.server.client_threads.remove(thread)
 				else:
-					file_logger.error(f'[Slave] Connection with Master system lost. (Details: connection_with_server_established = {self.client.connection_with_server_established}).\nRetrying to established the connection...')
+					self.logger.error(f'[Slave] Connection with Master system lost. (Details: connection_with_server_established = {self.client.connection_with_server_established}).\nRetrying to established the connection...')
 
 			time.sleep(5)
 
 	def sendDataToMaster(self, data):
 		self.client.sendData(data)
 		if self.client.connection_with_server_established:
-			file_logger.info(f'[Slave] Data sent to the master system : {data}')
+			self.logger.info(f'[Slave] Data sent to the master system : {data}')
 		else:
-			file_logger.info(f'[Slave] Data not sent to the master system : {data}')
+			self.logger.info(f'[Slave] Data not sent to the master system : {data}')
 
 	def sendCommandToTransferQueue(self, message):
 
@@ -90,4 +80,4 @@ class Slave(threading.Thread):
 
 		# Command is sent to Transfer Queue to be sent to the STM32 in sendCommandsThread
 		self.transfer_queue.put(command)
-		file_logger.info(f"[Slave] Command will be sent to STM. ({message['action']} : {message['data']})")
+		self.logger.info(f"[Slave] Command will be sent to STM. ({message['action']} : {message['data']})")
