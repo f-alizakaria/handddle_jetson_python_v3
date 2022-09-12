@@ -68,15 +68,14 @@ class SendCommandsThread(threading.Thread):
 
 								if command['system_code'] == 'broadcast':
 									message, hexa = TLVMessage.createTLVCommandFromJson(
-										self.broadcast_uid, 'buzzer', 0
+										self.broadcast_uid, command['action'], 0
 									)
 
 									# Here, we send stop buzzer command to all STM with 'T' in their system_code
 									for slave in self.slaves:
 										for system_code in list(slave['system_codes'].keys()):
-											if 'T' in system_code:
-												command['system_code'] = system_code
-												self.thread.sendCommandToSlave(command)
+											command['system_code'] = system_code
+											self.thread.sendCommandToSlave(command)
 
 								else:
 									message, hexa = TLVMessage.createTLVCommandFromJson(self.master['system_codes'][command['system_code']],
