@@ -15,7 +15,6 @@ class Client:
 
 		self.logger = LoggingService('client').getLogger()
 
-
 		self.connection_with_server_established = connection_with_server_established
 
 		self.logger.info('[Client] Creating client...')

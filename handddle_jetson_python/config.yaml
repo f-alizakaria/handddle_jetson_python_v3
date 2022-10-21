@@ -18,6 +18,16 @@ systems:
       R-01: C2062201
     start: false
 
+socket_server:
+  protocol: https
+  host: beta.handddle.com
+  token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJsaW5lIiwibmFtZSI6IkhhbmRkZGxlIiwiaWF0IjoxNTE2MjM5MDIyfQ.pP40SSJan5Zpw946k3DzukSnkmrcJOT3pO0VVUY0aew
+  path: /socket
+  event: farm command
+
+gui:
+  host: 127.0.0.1
+  port: 8080
 
 broadcast:
   uid: CFFFFFFF
@@ -43,6 +53,7 @@ scanner:
 logging:
   directory: logs
   level: DEBUG
+  console: true
 
 debug: false
 

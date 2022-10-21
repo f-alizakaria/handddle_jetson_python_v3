@@ -42,14 +42,16 @@ class FarmManager:
 		self.demo = False
 		self.display_data = False
 
-		# Command transfer
-		self.transfer_queue = Queue(maxsize=100)
-
 		self.master, self.slaves = None, None
 		self.profile = None
 		self.broadcast = None
 
+		self.socket_server_config = None
+
 		self.serverClientThread = None
+
+		self.gui_host = None
+		self.gui_port = None
 
 		self.config = self.readConfigFile(config_path=self.config_filepath)
 		self.loadConfiguration()
@@ -73,11 +75,11 @@ class FarmManager:
 		self.last_data = {}
 
 		# Multithreading
-		self.readDataThread = ReadDataThread(self.serverClientThread, self.master, self.slaves, self.profile, self.se, self.api_server_config, self.influxdb_config, self.transfer_queue, self.status_dict, self.last_data, self.debug)
-		self.sendCommandsThread = SendCommandsThread(self.serverClientThread, self.master, self.slaves, self.profile, self.se, self.api_server_config, self.transfer_queue, self.debug, self.broadcast)
-		self.watchdogThread = WatchdogThread(self.watchdog_interval, self.transfer_queue, self.broadcast, self.debug)
+		self.readDataThread = ReadDataThread(self.serverClientThread, self.master, self.slaves, self.profile, self.se, self.influxdb_config, self.status_dict, self.last_data, self.debug)
+		self.sendCommandsThread = SendCommandsThread(self.serverClientThread, self.master, self.slaves, self.profile, self.se, self.socket_server_config, self.debug, self.broadcast)
+		self.watchdogThread = WatchdogThread(self.watchdog_interval, self.broadcast, self.debug, self.se)
 		self.scannerThread = ScannerThread(self.scanner_config, self.api_server_config, self.debug)
-		self.guiThread = GUIThread(self.master, self.slaves, self.profile, self.broadcast, self.api_server_config, self.status_dict, self.last_data, self.display_data, self.transfer_queue, self.debug)
+		self.guiThread = GUIThread(self.se, self.master, self.slaves, self.profile, self.broadcast, self.socket_server_config, self.status_dict, self.last_data, self.display_data, self.debug, self.gui_host, self.gui_port)
 
 		self.threads = [
 			self.readDataThread,
@@ -88,8 +90,8 @@ class FarmManager:
 		]
 
 		if self.demo:
-			self.demoThread = DemoThread(self.transfer_queue, self.debug)
-			# self.threads.append(self.demoThread)
+			self.demoThread = DemoThread(self.master, self.slaves, self.profile, self.se)
+			self.threads.append(self.demoThread)
 
 	def readConfigFile(self, config_path):
 		with open(config_path, 'r') as config_file:
@@ -97,9 +99,16 @@ class FarmManager:
 
 	def loadConfiguration(self):
 
+		# Load GUI parameters
+		self.gui_host = self.config['gui']['host']
+		self.gui_port = self.config['gui']['port']
+
 		self.debug = self.config['debug']
 		self.demo = self.config['demo']
 		self.display_data = self.config['display_data']
+
+		# Socket configuration
+		self.socket_server_config = self.config['socket_server']
 
 		self.api_server_config = self.config['api_server']
 		# Create a unique server session for the whole app
@@ -219,7 +228,7 @@ class FarmManager:
 			if system['profile'] == 'master':
 				self.serverClientThread = Master(self.master, self.slaves, self.influxdb_config, self.debug)
 			else:
-				self.serverClientThread = Slave(self.master, system, self.transfer_queue)
+				self.serverClientThread = Slave(self.master, system, self.se)
 
 			self.profile = system['profile']
 			self.broadcast = self.config['broadcast']

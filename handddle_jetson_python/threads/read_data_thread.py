@@ -16,22 +16,19 @@ from lib.logging_service import LoggingService
 
 
 class ReadDataThread(threading.Thread):
-	def __init__(self, thread, master, slaves, profile, se, api_server_config, influxdb_config, transfer_queue, status_dict, last_data, debug):
+	def __init__(self, thread, master, slaves, profile, se, influxdb_config, status_dict, last_data, debug):
 		threading.Thread.__init__(self)
 		self.thread = thread
 		self.master = master
 		self.slaves = slaves
 		self.profile = profile
 		self.se = se
-		self.api_server_config = api_server_config
 		self.influxdb_config = influxdb_config
-		self.transfer_queue = transfer_queue
 		self.status_dict = status_dict
 		self.last_data = last_data
 		self.debug = debug
 		self.influxdb_service = InfluxdbService(influxdb_config, debug)
 		self.logger = LoggingService('data').getLogger()
-
 
 		self.slaves_uid = [uid for slave in self.slaves for system_code, uid in slave['system_codes'].items()]
 
@@ -137,8 +134,9 @@ class ReadDataThread(threading.Thread):
 											self.last_data[system_code] = {}
 										self.last_data[system_code][message.data.getKey()] = message.data.getValue()
 
-									if type(message) is CommandMessage:
-										self.transfer_queue.put(tlv_message.hex_data)
+									# TODO Configure this with utils file
+									# if type(message) is CommandMessage:
+									# 	self.transfer_queue.put(tlv_message.hex_data)
 
 							except requests.exceptions.ConnectionError as e:
 								self.logger.error('The application is not connected to internet. No data sent.')

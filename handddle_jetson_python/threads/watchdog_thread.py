@@ -4,6 +4,7 @@ import time
 from messages.tlv_message import TLVMessage
 
 from lib.logging_service import LoggingService
+from lib.utils import send_message
 
 
 #######################
@@ -12,9 +13,8 @@ from lib.logging_service import LoggingService
 
 
 class WatchdogThread(threading.Thread):
-	def __init__(self, interval, transfer_queue, broadcast, debug):
+	def __init__(self, interval, broadcast, debug, se):
 		threading.Thread.__init__(self)
-		self.transfer_queue = transfer_queue
 		self.debug = debug
 
 		self.interval = interval
@@ -23,6 +23,8 @@ class WatchdogThread(threading.Thread):
 		self.logger = LoggingService('watchdog').getLogger()
 
 		self.broadcast_uid = broadcast['uid']
+
+		self.se = se
 
 	def run(self):
 
@@ -40,7 +42,7 @@ class WatchdogThread(threading.Thread):
 					)
 
 					self.count = 0
-					self.transfer_queue.put(message)
+					send_message(se=self.se, message=message)
 
 			except Exception as e:
 				self.logger.critical(f'ERROR: An error occured while sending the watchdog command. (Details: {e})')

@@ -64,19 +64,14 @@ class Master(threading.Thread):
 			for client in self.clients_list:
 				client.send_check_message()
 
-
 			time.sleep(5)
 
 	def sendCommandToSlave(self, command):
-
 		system_code = command['system_code']
 
 		if system_code in self.clients:
-
 			self.clients[system_code].sendData(command)
-			# self.clients[system_code].sendData(str(command).encode('utf8'))
 			self.logger.info('[Master] Command sent to the slave.')
-
 		else:
 			self.logger.critical(f'[Master] Unknown system code. ({system_code})')
 

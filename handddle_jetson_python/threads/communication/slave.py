@@ -6,15 +6,17 @@ from threads.communication.client import Client
 from messages.tlv_message import TLVMessage
 
 from lib.logging_service import LoggingService
+from lib.utils import send_message
+
 
 
 class Slave(threading.Thread):
 
-	def __init__(self, master, slave, transfer_queue):
+	def __init__(self, master, slave, se):
 		threading.Thread.__init__(self)
 		self.master = master
 		self.slave = slave
-		self.transfer_queue = transfer_queue
+		self.se = se
 
 		self.master_initialized = False
 		self.connection_with_master_lost = False
@@ -31,7 +33,7 @@ class Slave(threading.Thread):
 		self.logger.info('[Slave] Initializing slave system.')
 
 		self.logger.info('[Slave] Creating server...')
-		self.server = Server(self.slave['ip'], self.slave['port'], self.sendCommandToTransferQueue)
+		self.server = Server(self.slave['ip'], self.slave['port'], self.sendCommand)
 		self.server.start()
 
 		# A slave accepts only one connection (from the master)
@@ -70,14 +72,13 @@ class Slave(threading.Thread):
 		else:
 			self.logger.info(f'[Slave] Data not sent to the master system : {data}')
 
-	def sendCommandToTransferQueue(self, message):
+	def sendCommand(self, message):
 
 		# Here, we convert string representation of dictionary into dictionary
 		message = eval(message)
 
-		# message = json.loads(re.search('({.+})', message).group(0).replace("'", '"'))
 		command, hexa = TLVMessage.createTLVCommandFromJson(self.slave['system_codes'][message['system_code']], message['action'], int(message['data']))
 
-		# Command is sent to Transfer Queue to be sent to the STM32 in sendCommandsThread
-		self.transfer_queue.put(command)
-		self.logger.info(f"[Slave] Command will be sent to STM. ({message['action']} : {message['data']})")
+		# Command is sent to the STM32
+		send_message(se=self.se, message=command)
+		self.logger.info(f"[Slave] Command be sent to the STM. ({message['action']} : {message['data']})")
