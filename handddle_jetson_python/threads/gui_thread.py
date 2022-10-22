@@ -111,6 +111,7 @@ class GUIThread(threading.Thread):
                 self.broadcast_uid, 'door_closed', 0
             )
             send_message(se=self.se, message=message)
+            self.logger.info('>>> Sent command: {:040x}'.format(int.from_bytes(message, byteorder='big')))
 
             return {'success': True}
 

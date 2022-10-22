@@ -81,4 +81,5 @@ class Slave(threading.Thread):
 
 		# Command is sent to the STM32
 		send_message(se=self.se, message=command)
+		self.logger.info('>>> Sent command: {:040x}'.format(int.from_bytes(message, byteorder='big')))
 		self.logger.info(f"[Slave] Command be sent to the STM. ({message['action']} : {message['data']})")

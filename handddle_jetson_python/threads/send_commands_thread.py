@@ -73,6 +73,7 @@ class SendCommandsThread(threading.Thread):
                                                                             command['action'],
                                                                             int(command['data']))
                     send_message(se=self.se, message=message)
+                    self.logger.info('>>> Sent command: {:040x}'.format(int.from_bytes(message, byteorder='big')))
 
                     # Test - Uncomment this line to check if the message is well formated
                     # self.logger.info(TLVMessage(io.BytesIO(message)))
