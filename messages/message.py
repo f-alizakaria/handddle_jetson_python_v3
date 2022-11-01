@@ -41,9 +41,9 @@ class CommandMessage(Message):
 		3: {'name': 'air_extraction', 'values': [e for e in range(100+1)]},
 		4: {'name': 'temperature', 'values': [t for t in range(100+1)]},
 		5: {'name': 'led_color', 'values': [l for l in range(17+1)]},
-		6: {'name': 'system_on', 'values': [0, 1]},
+		6: {'name': 'on_off', 'values': [0, 1]},
 		7: {'name': 'door_closed', 'values': [0, 1]},
-		10: {'name': 'relay_on', 'values': [0, 1]},
+		10: {'name': 'relay_off', 'values': [0, 1]},
 		11: {'name': 'tare', 'values': [1]},
 		12: {'name': 'get_weight', 'values': [1]},
 		14: {'name': 'dehumidifier_on', 'values': [0,1]},
@@ -83,8 +83,8 @@ class MainMessage(Message):
 		3: {'name': 'relay_on', 'class': 'default_data_persister'},
 		4: {'name': 'humidity_sp', 'class': 'default_data_persister'},
 		5: {'name': 'temperature_sp', 'class': 'temperature_data_persister'},
-		6: {'name': 'humidity', 'class': 'default_data_persister'},
-		7: {'name': 'temperature', 'class': 'temperature_data_persister'},
+		6: {'name': 'humidity_ss1', 'class': 'default_data_persister'},
+		7: {'name': 'temperature_ss1', 'class': 'temperature_data_persister'},
 		8: {'name': 'humidity_ss2', 'class': 'default_data_persister'},
 		9: {'name': 'temperature_ss2', 'class': 'temperature_data_persister'},
 		10: {'name': 'humidity_sen5x', 'class': 'default_data_persister'},
@@ -97,8 +97,15 @@ class MainMessage(Message):
 		17: {'name': 'pm1_sen5x', 'class': 'default_data_persister'},
 		18: {'name': 'pm2_5_sen5x', 'class': 'default_data_persister'},
 		19: {'name': 'pm4_sen5x', 'class': 'default_data_persister'},
-		20: {'name': 'pm10_sen5x', 'class': 'door_closed_data_persister'},
-		22: {'name': 'typology', 'class': 'default_data_persister'}, # Unused
+		20: {'name': 'pm10_sen5x', 'class': 'default_data_persister'},
+		21: {'name': 'humidity_sen5x_2', 'class': 'default_data_persister'},
+		22: {'name': 'temperature_sen5x_2', 'class': 'temperature_data_persister'},  # Unused
+		23: {'name': 'voc_index_sen5x_2', 'class': 'default_data_persister'},
+		24: {'name': 'nox_index_sen5x_2', 'class': 'default_data_persister'},
+		25: {'name': 'pm1_sen5x_2', 'class': 'default_data_persister'},
+		26: {'name': 'pm2_5_sen5x_2', 'class': 'default_data_persister'},
+		27: {'name': 'pm4_sen5x_2', 'class': 'default_data_persister'},
+		28: {'name': 'pm10_sen5x_2', 'class': 'default_data_persister'},
 	}
 
 	def __init__(self, subtype, content):
