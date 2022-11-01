@@ -63,12 +63,12 @@ class FarmManager:
 
 		TLVMessage.LOGGER = LoggingService('tlv_message').getLogger()
 
-		# Start desired system
-		self.startMasterOrSlave()
-
 		# Serial
 		self.se = {}
 		self.loadUSBPorts()
+
+		# Start desired system
+		self.startMasterOrSlave()
 
 		# Status & last data
 		self.status_dict = {}
