@@ -52,7 +52,7 @@ class HandleClientThread(threading.Thread):
 	def run(self):
 		while True:
 			try:
-				message = self.conn.recv(1024).decode('utf8')
+				message = self.conn.recv(2048).decode('utf8')
 
 				if message:
 					if message == 'check_message':
