@@ -38,6 +38,7 @@ class Master(threading.Thread):
 			while client is None:
 				try:
 					client = Client(slave['ip'], slave['port'])
+					client.start()
 
 					# Associate this client for each system code
 					for system_code in slave['system_codes']:
@@ -52,6 +53,7 @@ class Master(threading.Thread):
 		# Init the server
 		self.logger.info('[Master] Creating server...')
 		self.server = Server(self.master['ip'], self.master['port'], self.sendSlaveDataToCloud)
+		self.server.start()
 
 		while True:
 			time.sleep(5)

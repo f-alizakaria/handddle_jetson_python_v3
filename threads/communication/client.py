@@ -1,17 +1,22 @@
+import threading
+
 import socketio
+import threading
 
 import time
 
 from lib.logging_service import LoggingService
 
 
-class Client:
+class Client(threading.Thread):
 	sio = socketio.Client()
 
 	def __init__(self, ip, port):
+		super().__init__()
 		self.ip = ip
 		self.port = port
 
+	def run(self):
 		self.callbacks()
 		Client.sio.connect(f'http://{self.ip}:{self.port}', namespaces=['/data'])
 		Client.sio.wait()

@@ -6,11 +6,12 @@ import eventlet
 from lib.logging_service import LoggingService
 
 
-class Server:
+class Server(threading.Thread):
 	sio = socketio.Server()
 	app = socketio.WSGIApp(sio)
 
 	def __init__(self, ip, port, reception_callback):
+		super().__init__()
 		self.ip = ip
 		self.port = port
 		self.client_threads = []
@@ -18,6 +19,8 @@ class Server:
 
 		self.logger = LoggingService('server').getLogger()
 		self.reception_callback = reception_callback
+
+	def run(self):
 		self.callbacks()
 		self.init_socket_server_connection()
 
