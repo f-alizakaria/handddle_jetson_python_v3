@@ -37,7 +37,7 @@ class Master(threading.Thread):
 
 			while client is None:
 				try:
-					client = Client(slave['ip'], slave['port'])
+					client = Client(slave['ip'], slave['port'], 'master')
 					client.start()
 
 					# Associate this client for each system code
@@ -52,7 +52,7 @@ class Master(threading.Thread):
 
 		# Init the server
 		self.logger.info('[Master] Creating server...')
-		self.server = Server(self.master['ip'], self.master['port'], self.sendSlaveDataToCloud)
+		self.server = Server(self.master['ip'], self.master['port'], self.sendSlaveDataToCloud, 'master')
 		self.server.start()
 
 		while True:
@@ -62,7 +62,7 @@ class Master(threading.Thread):
 		system_code = command['system_code']
 
 		if system_code in self.clients:
-			self.clients[system_code].sendData(command)
+			self.clients[system_code].sio.emit('STM', command, namespace='/data')
 			self.logger.info('[Master] Command sent to the slave.')
 		else:
 			self.logger.critical(f'[Master] Unknown system code. ({system_code})')

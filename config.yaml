@@ -4,14 +4,14 @@ serial:
 
 systems:
   - profile: master
-    ip: 10.53.18.1 # 169.254.1.51
+    ip: 169.254.1.51
     port: 5050
     system_codes:
       R-17: C1062208
     start: true
 
   - profile: slave
-    ip: 10.53.18.54 # 169.254.1.11
+    ip: 169.254.1.11
     port: 5050
     system_codes:
       T-07: C1062201

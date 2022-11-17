@@ -34,6 +34,7 @@ class Slave(threading.Thread):
 
 		self.logger.info('[Slave] Creating server...')
 		self.server = Server(self.slave['ip'], self.slave['port'], self.sendCommand)
+		self.server.start()
 
 		# A slave accepts only one connection (from the master)
 		self.logger.info('[Slave] Waiting for the master client to connect...')
@@ -43,7 +44,8 @@ class Slave(threading.Thread):
 		self.logger.info('[Slave] Creating client...')
 		while self.client is None:
 			try:
-				self.client = Client(self.master['ip'], self.master['port'])
+				self.client = Client(self.master['ip'], self.master['port'], 'slave')
+				self.client.start()
 
 			except ConnectionRefusedError:
 				self.logger.error('[Slave] Cannot reach the master system. Retrying...')

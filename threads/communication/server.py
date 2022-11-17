@@ -10,15 +10,17 @@ class Server(threading.Thread):
 	sio = socketio.Server()
 	app = socketio.WSGIApp(sio)
 
-	def __init__(self, ip, port, reception_callback):
+	def __init__(self, ip, port, reception_callback, profile):
 		super().__init__()
 		self.ip = ip
 		self.port = port
 		self.client_threads = []
-		self.profile = 'master' # profile
+		self.profile = profile
 
 		self.logger = LoggingService('server').getLogger()
 		self.reception_callback = reception_callback
+
+		self.namespace_name = 'data' if self.profile == 'master' else 'commands'
 
 	def run(self):
 		self.callbacks()
