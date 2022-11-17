@@ -34,7 +34,6 @@ class Slave(threading.Thread):
 
 		self.logger.info('[Slave] Creating server...')
 		self.server = Server(self.slave['ip'], self.slave['port'], self.sendCommand)
-		self.server.start()
 
 		# A slave accepts only one connection (from the master)
 		self.logger.info('[Slave] Waiting for the master client to connect...')
@@ -44,7 +43,7 @@ class Slave(threading.Thread):
 		self.logger.info('[Slave] Creating client...')
 		while self.client is None:
 			try:
-				self.client = Client(self.master['ip'], self.master['port'], self.connection_with_master_lost)
+				self.client = Client(self.master['ip'], self.master['port'])
 
 			except ConnectionRefusedError:
 				self.logger.error('[Slave] Cannot reach the master system. Retrying...')
@@ -55,16 +54,6 @@ class Slave(threading.Thread):
 		self.master_initialized = True
 
 		while True:
-
-			self.client.send_check_message()
-
-			# remove dead thread from client_threads list
-			for client_thread in self.server.client_threads:
-				if not client_thread.is_alive():
-					self.server.client_threads.remove(client_thread)
-					self.logger.error(f'[Slave] Connection with Master system lost. (Details: connection_with_server_established = {self.client.connection_with_server_established}).\nRetrying to established the connection...')
-
-
 
 			time.sleep(5)
 
