@@ -26,7 +26,7 @@ class Client(threading.Thread):
 		while not self.client_connected:
 			try:
 				self.callbacks()
-				Client.sio.connect(f'http://{self.ip}:{self.port}', namespaces=[self.namespace_name])
+				Client.sio.connect(f'http://{self.ip}:{self.port}', namespaces=[f"/{self.namespace_name}"])
 				Client.sio.wait()
 				self.client_connected = True
 			except Exception as e:

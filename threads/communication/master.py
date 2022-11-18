@@ -62,7 +62,7 @@ class Master(threading.Thread):
 		system_code = command['system_code']
 
 		if system_code in self.clients:
-			self.clients[system_code].sio.emit('STM', command, namespace='/data')
+			self.clients[system_code].sio.emit('STM', command, namespace='/commands')
 			self.logger.info('[Master] Command sent to the slave.')
 		else:
 			self.logger.critical(f'[Master] Unknown system code. ({system_code})')

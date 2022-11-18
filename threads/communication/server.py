@@ -30,7 +30,7 @@ class Server(threading.Thread):
 		eventlet.wsgi.server(eventlet.listen((self.ip, self.port)), Server.app)
 
 	def callbacks(self):
-		@Server.sio.event(namespace="/data")
+		@Server.sio.event(namespace=f"/{self.namespace_name}")
 		def connect(sid, environ):
 			self.client_threads.append(environ["REMOTE_ADDR"]) # Client IP addr
 			# self.client_threads[-1].start()
@@ -40,7 +40,7 @@ class Server(threading.Thread):
 		def handle_client(reception_callback, remote_addr):
 			self.logger.info()
 
-		@Server.sio.on('STM', namespace='/data')
+		@Server.sio.on('STM', namespace=f"/{self.namespace_name}")
 		def message(sid, data):
 			self.logger.info(f"message: {data}")
 
@@ -49,11 +49,11 @@ class Server(threading.Thread):
 			else:
 				self.logger.info("Command will be sent to the STM")
 
-		@Server.sio.event(namespace="/data")
+		@Server.sio.event(namespace=f"/{self.namespace_name}")
 		def disconnect(sid):
 			self.logger.info(f"disconnect {sid}")
 
-		@Server.sio.event(namespace="/data")
+		@Server.sio.event(namespace=f"/{self.namespace_name}")
 		def connect_error(sid):
 			self.logger.info('The connection failed ', sid)
 
