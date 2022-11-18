@@ -35,15 +35,20 @@ class SendCommandsThread(threading.Thread):
 
         self.broadcast_uid = broadcast['uid']
 
-        self.socket_server = SocketServerCommands(socket_server_config=self.socket_server_config,
+        if self.profile == "master":
+            self.socket_server = SocketServerCommands(socket_server_config=self.socket_server_config,
                                                   reception_callback=self.handleCommand, logger=self.logger)
 
     def run(self):
 
         self.logger.info('Started SendCommandsThread')
 
-        self.socket_server.server_socket_callbacks()
-        self.socket_server.init_socket_server_connection()
+        if self.profile == "master":
+            self.socket_server.server_socket_callbacks()
+            self.socket_server.init_socket_server_connection()
+        else:
+            while True:
+                time.sleep(5)
 
     def handleCommand(self, command):
         try:
@@ -54,8 +59,6 @@ class SendCommandsThread(threading.Thread):
 
             if self.profile == 'master':
                 # Regular command
-                self.logger.info(f"[APP] Command : {command}")
-
                 if command['system_code'] in self.master['system_codes'] or command['system_code'] == 'broadcast':
 
                     if command['system_code'] == 'broadcast':
@@ -132,28 +135,28 @@ class SocketServerCommands:
         # Function invoked automatically when the connection with the server is established
         @self.sio.event
         def connect():
-            self.logger.info('Socket connected')
+            self.logger.info('[SOCKET] Socket connected')
 
         # Handling connection message event
         @self.sio.on('connection')
         def reveived_connection_message():
-            self.logger.info('Socket connected [ACK]')
+            self.logger.info('[SOCKET] Socket connected [ACK]')
 
         # Handling other connection message event
         @self.sio.on('other connection')
         def reveived_connection_message():
-            self.logger.info('New connection')
+            self.logger.info('[SOCKET] New connection on server socket')
 
         # Handling receiving command event
         @self.sio.on(self.socket_server_config['event'])
         def received_command(data):
-            self.logger.info(f'Command: {data}')
+            self.logger.info(f'[SOCKET] Command: {data}')
             self.reception_callback(data)
 
         # Handling disconnection event
         @self.sio.event
         def disconnect():
-            self.logger.info('Socket disconnected from socket server')
+            self.logger.info('[SOCKET] Socket disconnected from socket server')
 
     def _get_socket_server_url(self):
         return self.socket_server_config['protocol'] + '://' + self.socket_server_config['host']

@@ -1,61 +1,47 @@
-import socket
+import threading
+
+import socketio
+import threading
 
 import time
 
 from lib.logging_service import LoggingService
 
 
-class Client:
+class Client(threading.Thread):
+	sio = socketio.Client()
 
-	def __init__(self, ip, port, connection_with_server_established=False):
+	def __init__(self, ip, port, profile):
+		super().__init__()
 		self.ip = ip
 		self.port = port
-
-		self.socket = None
+		self.profile = profile
+		self.client_connected = False
 
 		self.logger = LoggingService('client').getLogger()
 
-		self.connection_with_server_established = connection_with_server_established
+		self.namespace_name = 'commands' if self.profile == 'master' else 'data'
 
-		self.logger.info('[Client] Creating client...')
-
-		self.client_connection()
-
-	def sendData(self, data):
-
-		if not self.connection_with_server_established:
-			self.logger.error('[Client] Connection with the server lost.')
-			self.connection_with_server_established = False
-			self.socket.close()
-			self.client_connection()
-
-		else:
+	def run(self):
+		while not self.client_connected:
 			try:
-				self.socket.send(str(data).encode('utf8'))
-
-			except BrokenPipeError:
-				self.logger.error('[Client] Connection with the server lost.')
-				self.connection_with_server_established = False
-				self.socket.close()
-				self.client_connection()
-
+				self.callbacks()
+				Client.sio.connect(f'http://{self.ip}:{self.port}', namespaces=[f"/{self.namespace_name}"])
+				Client.sio.wait()
+				self.client_connected = True
 			except Exception as e:
-				self.logger.critical('[Client] Error while sending a message. (Details: {})'.format(e))
+				self.logger.error(f'Cannot connect to the server. Retrying... (Details: {e})')
+				time.sleep(1)
 
-	def client_connection(self):
-		while not self.connection_with_server_established:
-			try:
-				# Create socket to connect to the desired IP
-				self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-				self.socket.settimeout(5)
-				self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR,
-									   1)  # to allow to recreate a socket without the address already use error
-				self.socket.connect((self.ip, self.port))
-				self.connection_with_server_established = True
-				self.logger.info('[Client] Done. Client connected to {} on port {}.'.format(self.ip, self.port))
-			except Exception as e:
-				self.logger.error(f'[Client] Cannot connect to the server with @IP {self.ip}. Retrying...\n(Details: {e}')
-				time.sleep(5)
+	def callbacks(self):
+		@Client.sio.event(namespace=f"/{self.namespace_name}")
+		def connect():
+			self.logger.info('Connection established with server')
 
-	def send_check_message(self):
-		self.sendData('check_message')
+		@Client.sio.event(namespace=f"/{self.namespace_name}")
+		def my_message(data):
+			self.logger.info('message received with ', data)
+
+		@Client.sio.event
+		def disconnect():
+			self.logger.info('disconnected from server')

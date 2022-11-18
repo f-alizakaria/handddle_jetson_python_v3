@@ -9,7 +9,6 @@ from lib.influxdb_service import InfluxdbService
 from lib.logging_service import LoggingService
 
 
-
 class Master(threading.Thread):
 
 	def __init__(self, master, slaves, influxdb_config, debug):
@@ -38,13 +37,14 @@ class Master(threading.Thread):
 
 			while client is None:
 				try:
-					client = Client(slave['ip'], slave['port'])
+					client = Client(slave['ip'], slave['port'], 'master')
+					client.start()
 
 					# Associate this client for each system code
 					for system_code in slave['system_codes']:
 						self.clients[system_code] = client
 
-				except ConnectionRefusedError as e:
+				except Exception as e:
 					self.logger.critical(f"[Master] Cannot reach the slave system.\nRetrying... at {slave['ip']} : {slave['port']}")
 					time.sleep(5)
 
@@ -52,25 +52,17 @@ class Master(threading.Thread):
 
 		# Init the server
 		self.logger.info('[Master] Creating server...')
-		self.server = Server(self.master['ip'], self.master['port'], self.sendSlaveDataToCloud)
+		self.server = Server(self.master['ip'], self.master['port'], self.sendSlaveDataToCloud, 'master')
 		self.server.start()
 
 		while True:
-			# Remove dead thread from client_threads list
-			for thread in self.server.client_threads:
-				if not thread.is_alive():
-					self.server.client_threads.remove(thread)
-
-			for client in self.clients_list:
-				client.send_check_message()
-
 			time.sleep(5)
 
 	def sendCommandToSlave(self, command):
 		system_code = command['system_code']
 
 		if system_code in self.clients:
-			self.clients[system_code].sendData(command)
+			self.clients[system_code].sio.emit('STM', command, namespace='/commands')
 			self.logger.info('[Master] Command sent to the slave.')
 		else:
 			self.logger.critical(f'[Master] Unknown system code. ({system_code})')

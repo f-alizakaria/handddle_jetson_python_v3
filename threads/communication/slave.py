@@ -33,7 +33,7 @@ class Slave(threading.Thread):
 		self.logger.info('[Slave] Initializing slave system.')
 
 		self.logger.info('[Slave] Creating server...')
-		self.server = Server(self.slave['ip'], self.slave['port'], self.sendCommand)
+		self.server = Server(self.slave['ip'], self.slave['port'], self.sendCommand, 'slave')
 		self.server.start()
 
 		# A slave accepts only one connection (from the master)
@@ -44,7 +44,8 @@ class Slave(threading.Thread):
 		self.logger.info('[Slave] Creating client...')
 		while self.client is None:
 			try:
-				self.client = Client(self.master['ip'], self.master['port'], self.connection_with_master_lost)
+				self.client = Client(self.master['ip'], self.master['port'], 'slave')
+				self.client.start()
 
 			except ConnectionRefusedError:
 				self.logger.error('[Slave] Cannot reach the master system. Retrying...')
@@ -55,34 +56,12 @@ class Slave(threading.Thread):
 		self.master_initialized = True
 
 		while True:
-
-			self.client.send_check_message()
-
-			# remove dead thread from client_threads list
-			for client_thread in self.server.client_threads:
-				if not client_thread.is_alive():
-					self.server.client_threads.remove(client_thread)
-					self.logger.error(f'[Slave] Connection with Master system lost. (Details: connection_with_server_established = {self.client.connection_with_server_established}).\nRetrying to established the connection...')
-
-
-
 			time.sleep(5)
 
-	def sendDataToMaster(self, data):
-		self.client.sendData(data)
-		if self.client.connection_with_server_established:
-			self.logger.info(f'[Slave] Data sent to the master system : {data}')
-		else:
-			self.logger.info(f'[Slave] Data not sent to the master system : {data}')
-
 	def sendCommand(self, message):
-
-		# Here, we convert string representation of dictionary into dictionary
-		message = eval(message)
 
 		command, hexa = TLVMessage.createTLVCommandFromJson(self.slave['system_codes'][message['system_code']], message['action'], int(message['data']))
 
 		# Command is sent to the STM32
 		send_message(se=self.se, message=command)
-		self.logger.info('>>> Sent command: {:040x}'.format(int.from_bytes(message, byteorder='big')))
-		self.logger.info(f"[Slave] Command be sent to the STM. ({message['action']} : {message['data']})")
+		self.logger.info('>>> Sent command: {:040x}'.format(int.from_bytes(command, byteorder='big')))

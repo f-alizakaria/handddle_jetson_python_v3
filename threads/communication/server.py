@@ -1,80 +1,61 @@
 import socket
+import socketio
 import threading
+import eventlet
 
 from lib.logging_service import LoggingService
 
 
 class Server(threading.Thread):
+	sio = socketio.Server()
+	app = socketio.WSGIApp(sio)
 
-	def __init__(self, ip, port, reception_callback):
-		threading.Thread.__init__(self)
+	def __init__(self, ip, port, reception_callback, profile):
+		super().__init__()
 		self.ip = ip
 		self.port = port
-		self.reception_callback = reception_callback
+		self.client_threads = []
+		self.profile = profile
 
 		self.logger = LoggingService('server').getLogger()
-
-		self.client_threads = []
-
-		# Create socket to the desired IP
-		self.logger.info('[Server] Creating server...')
-		self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-		self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-		self.logger.info(f"Port : {self.port} and IP addr : {self.ip}")
-		self.socket.bind((self.ip, self.port))
-		self.socket.listen()
-		self.logger.info('[Server] Done. Server running on port {} (Host: {}).'.format(self.port, self.ip))
-
-	def acceptClient(self, reception_callback):
-		conn, addr = self.socket.accept()
-
-		self.client_threads.append(HandleClientThread(conn, addr, reception_callback, self.logger))
-		self.client_threads[-1].start()
-
-		self.logger.info('[Server] New client connected (Total: {})'.format(len(self.client_threads)))
-
-	def run(self):
-		while True:
-			# Accept all client connections
-			self.acceptClient(self.reception_callback)
-
-
-class HandleClientThread(threading.Thread):
-
-	def __init__(self, conn, addr, reception_callback, logger):
-		threading.Thread.__init__(self)
-		self.conn = conn
-		self.conn.settimeout(15)
-		self.addr = addr
 		self.reception_callback = reception_callback
-		self.logger = logger
+
+		self.namespace_name = 'data' if self.profile == 'master' else 'commands'
 
 	def run(self):
-		while True:
-			try:
-				message = self.conn.recv(2048).decode('utf8')
+		self.callbacks()
+		self.init_socket_server_connection()
 
-				if message:
-					if message == 'check_message':
-						self.logger.info('Check message received.')
-						continue
+	def init_socket_server_connection(self):
+		eventlet.wsgi.server(eventlet.listen((self.ip, self.port)), Server.app)
 
-					self.logger.info('[Server] New message from [{}]: {}'.format(self.addr, message))
+	def callbacks(self):
+		@Server.sio.event(namespace=f"/{self.namespace_name}")
+		def connect(sid, environ):
+			self.client_threads.append(environ["REMOTE_ADDR"]) # Client IP addr
+			# self.client_threads[-1].start()
 
-					# Execute callback function
-					if self.reception_callback is not None:
-						self.reception_callback(message)
-				else:
-					self.logger.critical('[Server] Connection lost.')
-					break
+			self.logger.info('[Server] New client connected (Total: {})'.format(len(self.client_threads)))
 
-			except ConnectionResetError as e:
-				self.logger.critical('[Server] Connection lost. (Details: {})'.format(e))
+		def handle_client(reception_callback, remote_addr):
+			self.logger.info()
 
-			except socket.timeout:
-				self.logger.critical("[Server] Timeout raised and caught. Please verify the Ethernet cables.")
+		@Server.sio.on('STM', namespace=f"/{self.namespace_name}")
+		def message(sid, data):
+			self.logger.info(f"message: {data}")
 
-			except Exception as e:
-				self.logger.critical('[Server] Error while dealing with a reveiced message. (Details: {})'.format(e))
+			if self.profile == 'master':
+				self.logger.info(f"Slave's data: {data}\nWill be sent to the Cloud")
+			else:
+				self.logger.info(f"Command ({data['system_code']} -> {data['action']}: {data['data']}) will be sent to the STM")
+				self.reception_callback(data)
 
-		self.conn.close()
+		@Server.sio.event(namespace=f"/{self.namespace_name}")
+		def disconnect(sid):
+			self.logger.info(f"disconnect {sid}")
+
+		@Server.sio.event(namespace=f"/{self.namespace_name}")
+		def connect_error(sid):
+			self.logger.info('The connection failed ', sid)
+
+
