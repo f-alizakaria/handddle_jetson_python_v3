@@ -145,7 +145,7 @@ class SocketServerCommands:
         # Handling other connection message event
         @self.sio.on('other connection')
         def reveived_connection_message():
-            self.logger.info('[SOCKET] New connection')
+            self.logger.info('[SOCKET] New connection on server socket')
 
         # Handling receiving command event
         @self.sio.on(self.socket_server_config['event'])

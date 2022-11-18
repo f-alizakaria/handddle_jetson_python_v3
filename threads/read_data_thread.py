@@ -30,6 +30,8 @@ class ReadDataThread(threading.Thread):
 		self.influxdb_service = InfluxdbService(influxdb_config, debug)
 		self.logger = LoggingService('data').getLogger()
 
+		self.namespace_name = 'data'
+
 		self.slaves_uid = [uid for slave in self.slaves for system_code, uid in slave['system_codes'].items()]
 
 	def run(self):
@@ -157,7 +159,7 @@ class ReadDataThread(threading.Thread):
 
 				elif self.profile == 'slave' and has_data_to_send:
 					# send data to the master's server
-					self.slave_thread.client.sio.emit('STM', data_to_send, namespace='/data')
+					self.slave_thread.client.sio.emit('STM', data_to_send, namespace=f'/{self.namespace_name}')
 					self.logger.info('[Slave][DataThread] Datas sent to the master system.')
 
 			except Exception as e:
