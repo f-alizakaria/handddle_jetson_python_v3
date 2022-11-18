@@ -60,12 +60,8 @@ class Slave(threading.Thread):
 
 	def sendCommand(self, message):
 
-		# Here, we convert string representation of dictionary into dictionary
-		message = eval(message)
-
 		command, hexa = TLVMessage.createTLVCommandFromJson(self.slave['system_codes'][message['system_code']], message['action'], int(message['data']))
 
 		# Command is sent to the STM32
 		send_message(se=self.se, message=command)
-		self.logger.info('>>> Sent command: {:040x}'.format(int.from_bytes(message, byteorder='big')))
-		self.logger.info(f"[Slave] Command be sent to the STM. ({message['action']} : {message['data']})")
+		self.logger.info('>>> Sent command: {:040x}'.format(int.from_bytes(command, byteorder='big')))

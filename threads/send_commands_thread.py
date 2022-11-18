@@ -135,28 +135,28 @@ class SocketServerCommands:
         # Function invoked automatically when the connection with the server is established
         @self.sio.event
         def connect():
-            self.logger.info('Socket connected')
+            self.logger.info('[SOCKET] Socket connected')
 
         # Handling connection message event
         @self.sio.on('connection')
         def reveived_connection_message():
-            self.logger.info('Socket connected [ACK]')
+            self.logger.info('[SOCKET] Socket connected [ACK]')
 
         # Handling other connection message event
         @self.sio.on('other connection')
         def reveived_connection_message():
-            self.logger.info('New connection')
+            self.logger.info('[SOCKET] New connection')
 
         # Handling receiving command event
         @self.sio.on(self.socket_server_config['event'])
         def received_command(data):
-            self.logger.info(f'Command: {data}')
+            self.logger.info(f'[SOCKET] Command: {data}')
             self.reception_callback(data)
 
         # Handling disconnection event
         @self.sio.event
         def disconnect():
-            self.logger.info('Socket disconnected from socket server')
+            self.logger.info('[SOCKET] Socket disconnected from socket server')
 
     def _get_socket_server_url(self):
         return self.socket_server_config['protocol'] + '://' + self.socket_server_config['host']

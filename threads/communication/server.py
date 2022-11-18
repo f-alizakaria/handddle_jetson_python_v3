@@ -47,7 +47,8 @@ class Server(threading.Thread):
 			if self.profile == 'master':
 				self.logger.info(f"Slave's data: {data}\nWill be sent to the Cloud")
 			else:
-				self.logger.info("Command will be sent to the STM")
+				self.logger.info(f"Command ({data['system_code']} -> {data['action']}: {data['data']}) will be sent to the STM")
+				self.reception_callback(data)
 
 		@Server.sio.event(namespace=f"/{self.namespace_name}")
 		def disconnect(sid):
