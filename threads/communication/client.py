@@ -36,9 +36,7 @@ class Client(threading.Thread):
 	def callbacks(self):
 		@Client.sio.event(namespace=f"/{self.namespace_name}")
 		def connect():
-			self.logger.info('connection established')
-			Client.sio.emit('STM', {'response': 'my response to data namespace'}, namespace=f"/{self.namespace_name}")
-			self.logger.info('my response sent')
+			self.logger.info('Connection established with server')
 
 		@Client.sio.event(namespace=f"/{self.namespace_name}")
 		def my_message(data):

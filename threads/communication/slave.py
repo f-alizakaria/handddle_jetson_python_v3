@@ -33,7 +33,7 @@ class Slave(threading.Thread):
 		self.logger.info('[Slave] Initializing slave system.')
 
 		self.logger.info('[Slave] Creating server...')
-		self.server = Server(self.slave['ip'], self.slave['port'], self.sendCommand)
+		self.server = Server(self.slave['ip'], self.slave['port'], self.sendCommand, 'slave')
 		self.server.start()
 
 		# A slave accepts only one connection (from the master)
@@ -56,15 +56,7 @@ class Slave(threading.Thread):
 		self.master_initialized = True
 
 		while True:
-
 			time.sleep(5)
-
-	def sendDataToMaster(self, data):
-		self.client.sendData(data)
-		if self.client.connection_with_server_established:
-			self.logger.info(f'[Slave] Data sent to the master system : {data}')
-		else:
-			self.logger.info(f'[Slave] Data not sent to the master system : {data}')
 
 	def sendCommand(self, message):
 

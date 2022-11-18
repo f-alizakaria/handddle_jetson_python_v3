@@ -35,15 +35,20 @@ class SendCommandsThread(threading.Thread):
 
         self.broadcast_uid = broadcast['uid']
 
-        self.socket_server = SocketServerCommands(socket_server_config=self.socket_server_config,
+        if self.profile == "master":
+            self.socket_server = SocketServerCommands(socket_server_config=self.socket_server_config,
                                                   reception_callback=self.handleCommand, logger=self.logger)
 
     def run(self):
 
         self.logger.info('Started SendCommandsThread')
 
-        self.socket_server.server_socket_callbacks()
-        self.socket_server.init_socket_server_connection()
+        if self.profile == "master":
+            self.socket_server.server_socket_callbacks()
+            self.socket_server.init_socket_server_connection()
+        else:
+            while True:
+                time.sleep(5)
 
     def handleCommand(self, command):
         try:
@@ -54,8 +59,6 @@ class SendCommandsThread(threading.Thread):
 
             if self.profile == 'master':
                 # Regular command
-                self.logger.info(f"[APP] Command : {command}")
-
                 if command['system_code'] in self.master['system_codes'] or command['system_code'] == 'broadcast':
 
                     if command['system_code'] == 'broadcast':

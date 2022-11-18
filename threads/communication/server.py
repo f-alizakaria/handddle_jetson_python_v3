@@ -45,7 +45,7 @@ class Server(threading.Thread):
 			self.logger.info(f"message: {data}")
 
 			if self.profile == 'master':
-				self.logger.info("Slave's data will be sent to the Cloud")
+				self.logger.info(f"Slave's data: {data}\nWill be sent to the Cloud")
 			else:
 				self.logger.info("Command will be sent to the STM")
 
