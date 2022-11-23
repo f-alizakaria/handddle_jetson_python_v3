@@ -106,8 +106,8 @@ class MainMessage(Message):
 		26: {'name': 'pm2_5_sen5x_2', 'class': 'default_data_persister'},
 		27: {'name': 'pm4_sen5x_2', 'class': 'default_data_persister'},
 		28: {'name': 'pm10_sen5x_2', 'class': 'default_data_persister'},
-		29: {'name': 'ee_consumption', 'class': 'default_data_persister'},
-		30: {'name': 'plug_consumption', 'class': 'default_data_persister'},
+		29: {'name': 'embedded_electronics_current', 'class': 'current_data_persister'},
+		30: {'name': 'electric_plug_current', 'class': 'current_data_persister'},
 	}
 
 	def __init__(self, subtype, content):
