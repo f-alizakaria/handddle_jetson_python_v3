@@ -1,4 +1,5 @@
 import threading
+from urllib3.exceptions import NewConnectionError
 
 import socketio
 import threading
@@ -29,9 +30,12 @@ class Client(threading.Thread):
 				Client.sio.connect(f'http://{self.ip}:{self.port}', namespaces=[f"/{self.namespace_name}"])
 				Client.sio.wait()
 				self.client_connected = True
+			except socketio.exceptions.ConnectionError:
+				self.logger.info(f'Cannot connect to server with ip {self.ip} and port {self.port}, retrying in 5 seconds')
+				time.sleep(5)
 			except Exception as e:
 				self.logger.error(f'Cannot connect to the server. Retrying... (Details: {e})')
-				time.sleep(1)
+				time.sleep(5)
 
 	def callbacks(self):
 		@Client.sio.event(namespace=f"/{self.namespace_name}")
