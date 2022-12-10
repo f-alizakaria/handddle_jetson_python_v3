@@ -9,6 +9,8 @@ from messages.message import *
 
 from lib.logging_service import LoggingService
 
+from lib.utils import send_message
+
 
 ######################
 # Read received data #
@@ -33,6 +35,7 @@ class ReadDataThread(threading.Thread):
 		self.namespace_name = 'data'
 
 		self.slaves_uid = [uid for slave in self.slaves for system_code, uid in slave['system_codes'].items()]
+		self.master_system_codes = [system_code for system_code, uid in self.master['system_codes'].items()]
 
 	def run(self):
 
@@ -123,7 +126,8 @@ class ReadDataThread(threading.Thread):
 
 										if system_code not in data_to_send:
 											data_to_send[system_code] = {}
-										data_to_send[system_code][message.data.getKey()] = message.data.getValue()
+										else:
+											data_to_send[system_code][message.data.getKey()] = message.data.getValue()
 
 										self.logger.info('<<< Message received on port ' + port_name + ': ' + str(message))
 
@@ -135,10 +139,18 @@ class ReadDataThread(threading.Thread):
 										if system_code not in self.last_data:
 											self.last_data[system_code] = {}
 										self.last_data[system_code][message.data.getKey()] = message.data.getValue()
+									elif type(message) is CommandMessage:
+										self.logger.info('<<< Command message received on port ' + port_name + ': ' + str(message))
 
-									# TODO Configure this with utils file
-									# if type(message) is CommandMessage:
-									# 	self.transfer_queue.put(tlv_message.hex_data)
+										for system_code in self.master_system_codes:
+											# Because only roof environment send commands to other environment for now
+											if 'T' not in system_code:
+												uid = self.master['system_codes'][system_code]
+												command, hexa = TLVMessage.createTLVCommandFromJson(
+													uid, message.command_name, message.command_value
+												)
+												send_message(se=self.se, message=command)
+												self.logger.info('>>> Command message forwarded	 to ' + system_code + ': ' + str(message))
 
 							except requests.exceptions.ConnectionError as e:
 								self.logger.error('The application is not connected to internet. No data sent.')
@@ -154,7 +166,7 @@ class ReadDataThread(threading.Thread):
 
 				if self.profile == 'master' and has_data_to_send:
 					# Send all data to influxdb
-					self.influxdb_service.writeDataBySystemCode(data_to_send=data_to_send)
+					# self.influxdb_service.writeDataBySystemCode(data_to_send=data_to_send)
 					self.logger.info(f'[Master][DataThread] Datas sent to the cloud. (Details : {data_to_send})')
 
 				elif self.profile == 'slave' and has_data_to_send:
