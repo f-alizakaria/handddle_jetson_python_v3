@@ -84,6 +84,7 @@ class ReadDataThread(threading.Thread):
 							has_data = True
 
 					if has_data:
+						system_code = ''
 
 						# N strings/objets bytes de 20 octets
 						raw_received_data_chunks = [raw_received_data[i:i+21] for i in range(0, len(raw_received_data), 21)]
@@ -114,15 +115,6 @@ class ReadDataThread(threading.Thread):
 
 									if type(message) is MainMessage:
 										has_data_to_send = True
-
-										# Shift system code if needed
-										if 'shift' in MainMessage.DATA_TYPES[message.subtype]:
-											shift = MainMessage.DATA_TYPES[message.subtype]['shift']
-
-											if shift == 1:
-												system_code = system_code.replace('R', 'B').replace('T', 'R')
-											elif shift == -1:
-												system_code = system_code.replace('R', 'T').replace('B', 'R')
 
 										if system_code not in data_to_send:
 											data_to_send[system_code] = {}
