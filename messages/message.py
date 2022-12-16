@@ -145,8 +145,10 @@ class ErrorMessage(Message):
 		0: 'left_latch',
 		1: 'right_latch',
 		2: 'i2c_smart_power',
-		3: 'i2c_smart_sensor_1',
-		4: 'i2c_smart_sensor_2'
+		3: 'i2c_smart_sensor_int',
+		4: 'i2c_smart_sensor_ext',
+		5: 'i2c_sen5x_int',
+		6: 'i2c_sen5x_ext'
 	}
 
 	def __init__(self, subtype, content):
